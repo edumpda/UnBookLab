@@ -28,9 +28,9 @@ VALUES (2, 'Maria', 'Souza', 'Gerente de Projetos', 'maria.souza', '654321', 'us
 INSERT INTO Usuarios (ID, Nome, Sobrenome, Funcao, Login, SenhaCriptografada, FotoUsuarioURI)
 VALUES (3, 'João', 'Ferreira', 'Técnico em Informática', 'joao.ferreira', '789456', 'usuario3.jpg');
 
-INSERT INTO emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista, Status)
+INSERT INTO Emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista, Status)
 VALUES (1, '1234567890', 2, '2023-11-14', '2023-11-28', 'Em andamento');
-INSERT INTO emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista, Status)
+INSERT INTO Emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista, Status)
 VALUES (1, '1234567890', 2, '2023-11-14', '2023-11-28', 'Em andamento');
-INSERT INTO emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista, Status)
+INSERT INTO Emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista, Status)
 VALUES (1, '1234567890', 2, '2023-11-14', '2023-11-28', 'Em andamento');
