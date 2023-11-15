@@ -28,32 +28,9 @@ VALUES (2, 'Maria', 'Souza', 'Gerente de Projetos', 'maria.souza', '654321', 'us
 INSERT INTO Usuarios (ID, Nome, Sobrenome, Funcao, Login, SenhaCriptografada, FotoUsuarioURI)
 VALUES (3, 'João', 'Ferreira', 'Técnico em Informática', 'joao.ferreira', '789456', 'usuario3.jpg');
 
--- Insert data into the Acessos table
-INSERT INTO Acessos (ID, UsuarioID, DataAcesso, HoraAcesso)
-VALUES (1, 1, '2022-01-01', '08:00:00');
-
-INSERT INTO Acessos (ID, UsuarioID, DataAcesso, HoraAcesso)
-VALUES (2, 2, '2022-01-01', '09:00:00');
-
-INSERT INTO Acessos (ID, UsuarioID, DataAcesso, HoraAcesso)
-VALUES (3, 3, '2022-01-01', '10:00:00');
-
--- Insert data into the Manutencoes table
-INSERT INTO Manutencoes (ID, UsuarioID, DataEntrada, DataSaida, Observacoes)
-VALUES (1, 1, '2022-01-01', '2022-01-02', 'Reparo na tecla quebrada');
-
-INSERT INTO Manutencoes (ID, UsuarioID, DataEntrada, DataSaida, Observacoes)
-VALUES (2, 2, '2022-01-01', '2022-01-02', 'Limpeza do computador');
-
-INSERT INTO Manutencoes (ID, UsuarioID, DataEntrada, DataSaida, Observacoes)
-VALUES (3, 3, '2022-01-01', '2022-01-02', 'Formatação do computador');
-
--- Insert data into the SolicitacoesMaterial table
-INSERT INTO SolicitacoesMaterial (ID, UsuarioID, MaterialDidaticoID, DataSolicitacao, Status)
-VALUES (1, 1, 1, '2022-01-01', 'Aprovado');
-
-INSERT INTO SolicitacoesMaterial (ID, UsuarioID, MaterialDidaticoID, DataSolicitacao, Status)
-VALUES (2, 2, 2, '2022-01-01', 'Pendente');
-
-INSERT INTO SolicitacoesMaterial (ID, UsuarioID, MaterialDidaticoID, DataSolicitacao, Status)
-VALUES (3, 3, 3, '2022-01-01', 'Recusado');
+INSERT INTO emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista, Status)
+VALUES (1, '1234567890', 2, '2023-11-14', '2023-11-28', 'Em andamento');
+INSERT INTO emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista, Status)
+VALUES (1, '1234567890', 2, '2023-11-14', '2023-11-28', 'Em andamento');
+INSERT INTO emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista, Status)
+VALUES (1, '1234567890', 2, '2023-11-14', '2023-11-28', 'Em andamento');
