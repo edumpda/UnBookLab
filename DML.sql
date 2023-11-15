@@ -1,12 +1,12 @@
 -- Insert data into the Livros table
 INSERT INTO Livros (ISBN, Titulo, Autor, Descricao, Categoria, DataAquisicao, EstadoConservacao, LocalizacaoFisica, CapaLivroURI)
-VALUES ('978-3-16-148410-0', 'Desenvolvimento de Software', 'Alberto Souza', 'Aprenda a criar aplicativos para dispositivos móveis', 'Programação', '2022-01-01', 'Bom', 'Sala de Reuniões', 'livro1.jpg');
+VALUES ('9783161484100', 'Desenvolvimento de Software', 'Alberto Souza', 'Aprenda a criar aplicativos para dispositivos móveis', 'Programação', '2022-01-01', 'Bom', 'Sala de Reuniões', 'livro1.jpg');
 
 INSERT INTO Livros (ISBN, Titulo, Autor, Descricao, Categoria, DataAquisicao, EstadoConservacao, LocalizacaoFisica, CapaLivroURI)
-VALUES ('978-3-16-148411-7', 'Gestão de Projetos', 'Carlos Azevedo', 'Aprenda a liderar e gerenciar projetos de software', 'Gestão', '2022-01-01', 'Bom', 'Sala de Reuniões', 'livro2.jpg');
+VALUES ('9783161484117', 'Gestão de Projetos', 'Carlos Azevedo', 'Aprenda a liderar e gerenciar projetos de software', 'Gestão', '2022-01-01', 'Bom', 'Sala de Reuniões', 'livro2.jpg');
 
 INSERT INTO Livros (ISBN, Titulo, Autor, Descricao, Categoria, DataAquisicao, EstadoConservacao, LocalizacaoFisica, CapaLivroURI)
-VALUES ('978-3-16-148412-4', 'Inteligência Artificial', 'Ana Souza', 'Aprenda a criar e treinar modelos de inteligência artificial', 'Inteligência Artificial', '2022-01-01', 'Bom', 'Sala de Reuniões', 'livro3.jpg');
+VALUES ('9783161484124', 'Inteligência Artificial', 'Ana Souza', 'Aprenda a criar e treinar modelos de inteligência artificial', 'Inteligência Artificial', '2022-01-01', 'Bom', 'Sala de Reuniões', 'livro3.jpg');
 
 -- Insert data into the MateriaisDidaticos table
 INSERT INTO MateriaisDidaticos (ID, Descricao, Categoria, NumeroSerie, DataAquisicao, EstadoConservacao, LocalizacaoFisica, FotoMaterialURI)
