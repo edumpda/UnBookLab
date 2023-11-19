@@ -1,3 +1,5 @@
+USE Biblioteca;
+
 -- Insert data into the Livros table
 INSERT INTO Livros (ISBN, Titulo, Autor, Descricao, Categoria, DataAquisicao, EstadoConservacao, LocalizacaoFisica, CapaLivroURI)
 VALUES ('9783161484100', 'Desenvolvimento de Software', 'Alberto Souza', 'Aprenda a criar aplicativos para dispositivos móveis', 'Programação', '2022-01-01', 'Bom', 'Sala de Reuniões', 'livro1.jpg');

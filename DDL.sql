@@ -1,5 +1,7 @@
 CREATE DATABASE IF NOT EXISTS Biblioteca;
 USE Biblioteca;
+GRANT ALL PRIVILEGES ON Biblioteca TO 'unbooklab_admin'@'localhost';
+GRANT ALL PRIVILEGES ON Biblioteca.* TO 'unbooklab_admin'@'localhost';
 
 CREATE TABLE IF NOT EXISTS Livros (
     ISBN varchar(13) PRIMARY KEY,

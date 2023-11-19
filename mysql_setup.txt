@@ -1,0 +1,2 @@
+mysql -u root -p;
+CREATE USER 'unbooklab_admin'@'localhost' IDENTIFIED BY 'password_unbooklab';
