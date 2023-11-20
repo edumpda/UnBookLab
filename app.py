@@ -4,7 +4,8 @@ from models import db, Livros, MaterialDidatico, Usuario, Emprestimo
 from datetime import datetime
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///biblioteca.db'
+#COLOQUE A URL DO SEU BANCO NA LINHA 8, AINDA NÃO ESTÁ INTEGRADO
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://usuario:senha@localhost:3306/nomeDoBD'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'chave'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
@@ -77,6 +78,14 @@ def get_livro(isbn):
     }
 
     return jsonify(livro_json)
+
+@app.route('/get_livros')
+def get_livros():
+    from models import Livros
+
+    livros = Livros.query.all()
+    livros_json = [{'ISBN': livro.ISBN, 'Titulo': livro.Titulo, 'Autor': livro.Autor} for livro in livros]
+    return jsonify(livros_json)
 
 
 if __name__ == '__main__':
