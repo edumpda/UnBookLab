@@ -35,12 +35,12 @@ class Usuario(db.Model):
 class Emprestimo(db.Model):
     ID = db.Column(db.Integer, primary_key=True, autoincrement=True)
     IDUsuario = db.Column(db.Integer, db.ForeignKey('usuario.ID'))
-    IDLivro = db.Column(db.String(13), db.ForeignKey('livro.ISBN'))
+    IDLivro = db.Column(db.String(13), db.ForeignKey('livros.ISBN'))
     IDMaterialDidatico = db.Column(db.Integer, db.ForeignKey('material_didatico.ID'))
     DataEmprestimo = db.Column(db.Date)
     DataDevolucaoPrevista = db.Column(db.Date)
     Status = db.Column(db.String(50))
 
     usuario = db.relationship('Usuario', foreign_keys=[IDUsuario])
-    livro = db.relationship('Livro', foreign_keys=[IDLivro])
+    livro = db.relationship('Livros', foreign_keys=[IDLivro])
     material_didatico = db.relationship('MaterialDidatico', foreign_keys=[IDMaterialDidatico])
