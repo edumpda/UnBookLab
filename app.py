@@ -5,8 +5,8 @@ from datetime import datetime
 import json
 
 app = Flask(__name__)
-# COLOQUE A URL DO SEU BANCO NA LINHA 8, AINDA NÃO ESTÁ INTEGRADO
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://lucas:password@localhost:3306/Test'
+# COLOQUE A URL DO SEU BANCO NA LINHA 9, AINDA NÃO ESTÁ INTEGRADO
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://username:password@localhost:3306/Biblioteca'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'chave'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
@@ -47,9 +47,8 @@ def update_livro(isbn):
     livro.Titulo = data.get('Titulo', livro.Titulo)
     livro.Autor = data.get('Autor', livro.Autor)
     livro.Descricao = data.get('Descricao', livro.Descricao)
-    livro.Categoria = data.get('Categoria', livro.Categoria)
-    livro.DataAquisicao = datetime.strptime(
-        data.get('DataAquisicao', livro.DataAquisicao), '%Y-%m-%d').date()
+    data_aquisicao = data.get('DataAquisicao', str(livro.DataAquisicao))
+    livro.DataAquisicao = datetime.strptime(data_aquisicao, '%Y-%m-%d').date()
     livro.EstadoConservacao = data.get(
         'EstadoConservacao', livro.EstadoConservacao)
     livro.LocalizacaoFisica = data.get(
