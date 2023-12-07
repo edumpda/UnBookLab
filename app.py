@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, render_template, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from models import db, Livros, MaterialDidatico, Usuario, Emprestimo
 from datetime import datetime
@@ -6,7 +6,7 @@ import json
 
 app = Flask(__name__)
 # COLOQUE A URL DO SEU BANCO NA LINHA 9, AINDA NÃO ESTÁ INTEGRADO
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://usuario:senha@localhost:3306/Biblioteca'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://user:senha@localhost:3306/Biblioteca'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'chave'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
@@ -66,69 +66,124 @@ def add_livro():
 
 
 
-@app.route('/update_livro/<isbn>', methods=['PUT'])
-def update_livro(isbn):
+@app.route('/update_livro', methods=['GET', 'POST'])
+def update_livro():
+    mensagem = None
+    livro = None
+
+    if request.method == 'POST':
+        isbn_pesquisa = request.form.get('isbn_pesquisa')
+        app.logger.info(f"Formulário Recebido: {request.form}")
+        print(f"Conteúdo do Formulário: {request.form}")
+        print(f"ISBN Pesquisado: {isbn_pesquisa}")
+
+        # Certifique-se de que ISBN não seja None antes de fazer a consulta
+        if isbn_pesquisa is not None:
+            livro = Livros.query.get(isbn_pesquisa)
+
+        if livro:
+            return redirect(url_for('update_livro_form', isbn=isbn_pesquisa))
+        else:
+            mensagem = {'conteudo': 'Livro não encontrado.', 'classe': 'mensagem-erro'}
+
+    return render_template('update_livro_pesquisa.html', mensagem=mensagem)
+
+
+@app.route('/update_livro/<isbn>', methods=['GET', 'POST'])
+def update_livro_form(isbn):
     livro = Livros.query.get(isbn)
-    if livro is None:
-        return jsonify({'error': 'Livro não encontrado'}), 404
+    mensagem = None
 
-    data = request.json
-    livro.Titulo = data.get('Titulo', livro.Titulo)
-    livro.Autor = data.get('Autor', livro.Autor)
-    livro.Descricao = data.get('Descricao', livro.Descricao)
-    livro.Categoria = data.get('Categoria', livro.Categoria)
-    data_aquisicao = data.get('DataAquisicao', str(livro.DataAquisicao))
-    livro.DataAquisicao = datetime.strptime(data_aquisicao, '%Y-%m-%d').date()
-    livro.EstadoConservacao = data.get(
-        'EstadoConservacao', livro.EstadoConservacao)
-    livro.LocalizacaoFisica = data.get(
-        'LocalizacaoFisica', livro.LocalizacaoFisica)
-    livro.CapaLivroURI = data.get('CapaLivroURI', livro.CapaLivroURI)
+    if request.method == 'POST':
+        if livro:
+            data = request.form
+            livro.Titulo = data.get('titulo', livro.Titulo)
+            livro.Autor = data.get('autor', livro.Autor)
+            livro.Descricao = data.get('descricao', livro.Descricao)
+            livro.Categoria = data.get('categoria', livro.Categoria)
+            livro.DataAquisicao = datetime.strptime(data.get('data_aquisicao', str(livro.DataAquisicao)), '%Y-%m-%d').date()
+            livro.EstadoConservacao = data.get('estado_conservacao', livro.EstadoConservacao)
+            livro.LocalizacaoFisica = data.get('localizacao_fisica', livro.LocalizacaoFisica)
+            livro.CapaLivroURI = data.get('capa_livro_uri', livro.CapaLivroURI)
 
-    db.session.commit()
-    return jsonify({'message': 'Livro atualizado com sucesso'}), 200
-
-
-@app.route('/delete_livro/<isbn>', methods=['DELETE'])
-def delete_livro(isbn):
-    livro = Livros.query.get(isbn)
-    if livro is None:
-        return jsonify({'error': 'Livro não encontrado'}), 404
-
-    db.session.delete(livro)
-    db.session.commit()
-    return jsonify({'message': 'Livro excluído com sucesso'}), 200
+            try:
+                db.session.commit()
+                mensagem = {'conteudo': 'Livro atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
+            except Exception as e:
+                db.session.rollback()
+                mensagem = {'conteudo': f'Erro ao atualizar o livro: {str(e)}', 'classe': 'mensagem-erro'}
+        else:
+            mensagem = {'conteudo': 'Livro não encontrado para atualização.', 'classe': 'mensagem-erro'}
+    
+    return render_template('update_livro.html', livro=livro, mensagem=mensagem)
 
 
-@app.route('/get_livro/<isbn>')
-def get_livro(isbn):
-    livro = Livros.query.get(isbn)
-    if livro is None:
-        return jsonify({'error': 'Livro não encontrado'}), 404
 
-    livro_json = {
-        'ISBN': livro.ISBN,
-        'Titulo': livro.Titulo,
-        'Autor': livro.Autor,
-        'Descricao': livro.Descricao,
-        'Categoria': livro.Categoria,
-        'DataAquisicao': str(livro.DataAquisicao),
-        'EstadoConservacao': livro.EstadoConservacao,
-        'LocalizacaoFisica': livro.LocalizacaoFisica,
-        'CapaLivroURI': livro.CapaLivroURI
-    }
 
-    return jsonify(livro_json)
+@app.route('/delete_livro', methods=['GET', 'POST'])
+def delete_livro():
+    mensagem = None
+    livro = None
+
+    if request.method == 'POST':
+        isbn = request.form.get('isbn')
+        livro = Livros.query.get(isbn)
+
+        if livro:
+            try:
+                db.session.delete(livro)
+                db.session.commit()
+                mensagem = {'conteudo': 'Livro excluído com sucesso!', 'classe': 'mensagem-sucesso'}
+            except Exception as e:
+                db.session.rollback()
+                mensagem = {'conteudo': f'Erro ao excluir o livro: {str(e)}', 'classe': 'mensagem-erro'}
+        else:
+            mensagem = {'conteudo': 'Livro não encontrado para exclusão.', 'classe': 'mensagem-erro'}
+
+    return render_template('delete_livro.html', livro=livro, mensagem=mensagem)
+
+
+@app.route('/get_livro', methods=['GET', 'POST'])
+def get_livro():
+    if request.method == 'POST':
+        isbn = request.form.get('isbn')
+
+        if not isbn:
+            return jsonify({'error': 'ISBN não fornecido'}), 400
+
+        livro = Livros.query.get(isbn)
+
+        if livro is None:
+            return jsonify({'error': 'Livro não encontrado'}), 404
+
+        livro_json = {
+            'ISBN': livro.ISBN,
+            'Titulo': livro.Titulo,
+            'Autor': livro.Autor,
+            'Descricao': livro.Descricao,
+            'Categoria': livro.Categoria,
+            'DataAquisicao': str(livro.DataAquisicao),
+            'EstadoConservacao': livro.EstadoConservacao,
+            'LocalizacaoFisica': livro.LocalizacaoFisica,
+            'CapaLivroURI': livro.CapaLivroURI
+        }
+
+        return jsonify(livro_json)
+
+    return render_template('get_livro.html')
+
+
 
 
 @app.route('/get_livros')
 def get_livros():
-    from models import Livros
-
     livros = Livros.query.all()
-    livros_json = [{'ISBN': livro.ISBN, 'Titulo': livro.Titulo,
-                    'Autor': livro.Autor} for livro in livros]
+    livros_json = [{'ISBN': livro.ISBN, 'Titulo': livro.Titulo, 'Autor': livro.Autor} for livro in livros]
     return jsonify(livros_json)
+
+@app.route('/livros_crud')
+def livros_crud():
+    return render_template('livros_crud.html')
 
 ####### material didatico ########################################################################################################
 

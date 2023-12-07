@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excluir Livro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>Excluir Livro</h1>
+
+    <form method="post" action="{{ url_for('delete_livro') }}">
+        <!-- Campo para inserir ISBN do livro a ser excluído -->
+        <label for="isbn">ISBN:</label>
+        <input type="text" id="isbn" name="isbn" required><br>
+
+        <button type="submit">Excluir Livro</button>
+    </form>
+
+    <!-- Exibição de mensagens de sucesso ou erro -->
+    <div class="{{ mensagem.classe }}">{{ mensagem.conteudo }}</div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

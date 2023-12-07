@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD de Livros</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>CRUD de Livros</h1>
+
+    <ul>
+        <li><a href="{{ url_for('add_livro') }}">Cadastrar Livro</a></li>
+        <li><a href="{{ url_for('get_livro') }}">Consultar Livro</a></li>
+        <li><a href="{{ url_for('update_livro') }}">Atualizar Livro</a></li>
+        <li><a href="{{ url_for('delete_livro') }}">Excluir Livro</a></li>
+        <li><a href="{{ url_for('get_livros') }}">Listar Todos os Livros</a></li>
+        <li><a href="{{ url_for('index') }}">Voltar à Página Inicial</a></li>
+    </ul>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
