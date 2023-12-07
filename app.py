@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from flask_sqlalchemy import SQLAlchemy
 from models import db, Livros, MaterialDidatico, Usuario, Emprestimo
 from datetime import datetime
@@ -6,7 +6,7 @@ import json
 
 app = Flask(__name__)
 # COLOQUE A URL DO SEU BANCO NA LINHA 9, AINDA NÃO ESTÁ INTEGRADO
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:#teste123321@localhost:3306/Biblioteca'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://usuario:senha@localhost:3306/Biblioteca'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'chave'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
@@ -19,7 +19,7 @@ db.init_app(app)
 
 @app.route('/')
 def index():
-    return 'Hello World'
+    return render_template('index.html')
 
 
 @app.route('/create_db')
@@ -28,13 +28,42 @@ def create_db():
     return 'Banco de dados criado'
 
 
-@app.route('/add_livro')
+@app.route('/add_livro', methods=['GET', 'POST'])
 def add_livro():
-    livro = Livros(ISBN='9788575221631', Titulo='Guia Mangá de Bancos de Dados', Autor='Mana Takahashi', Descricao='Descrição grande demais', Categoria='Educação', DataAquisicao=datetime.strptime(
-        '2023-11-19', '%Y-%m-%d').date(), EstadoConservacao='Novo', LocalizacaoFisica='Estante 1', CapaLivroURI='https://s3-sa-east-1.amazonaws.com/catalogodasartes/obra_13269947.jpg')
-    db.session.add(livro)
-    db.session.commit()
-    return 'Livro adicionado'
+    mensagem = None
+
+    if request.method == 'POST':
+        isbn = request.form['isbn']
+        titulo = request.form['titulo']
+        autor = request.form['autor']
+        descricao = request.form['descricao']
+        categoria = request.form['categoria']
+        data_aquisicao = datetime.strptime(request.form['data_aquisicao'], '%Y-%m-%d').date()
+        estado_conservacao = request.form['estado_conservacao']
+        localizacao_fisica = request.form['localizacao_fisica']
+        capa_livro_uri = request.form['capa_livro_uri']
+
+        livro = Livros(
+            ISBN=isbn,
+            Titulo=titulo,
+            Autor=autor,
+            Descricao=descricao,
+            Categoria=categoria,
+            DataAquisicao=data_aquisicao,
+            EstadoConservacao=estado_conservacao,
+            LocalizacaoFisica=localizacao_fisica,
+            CapaLivroURI=capa_livro_uri
+        )
+        try:
+            db.session.add(livro)
+            db.session.commit()
+            mensagem = {'conteudo': 'Livro adicionado com sucesso!', 'classe': 'mensagem-sucesso'}
+        except Exception as e:
+            db.session.rollback()
+            mensagem = {'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
+
+    return render_template('cadastrar_livro.html', mensagem=mensagem)
+
 
 
 @app.route('/update_livro/<isbn>', methods=['PUT'])

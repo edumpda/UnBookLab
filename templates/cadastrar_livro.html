@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Livro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>Cadastrar Livro</h1>
+
+    {% if mensagem %}
+        <div class="{{ mensagem['classe'] }}">
+            {{ mensagem['conteudo'] }}
+        </div>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('add_livro') }}">
+        <label for="isbn">ISBN:</label>
+        <input type="text" id="isbn" name="isbn" required><br>
+
+        <label for="titulo">Título:</label>
+        <input type="text" id="titulo" name="titulo" required><br>
+
+        <label for="autor">Autor:</label>
+        <input type="text" id="autor" name="autor" required><br>
+
+        <label for="descricao">Descrição:</label>
+        <textarea id="descricao" name="descricao" rows="4" required></textarea><br>
+
+        <label for="categoria">Categoria:</label>
+        <input type="text" id="categoria" name="categoria" required><br>
+
+        <label for="data_aquisicao">Data de Aquisição:</label>
+        <input type="date" id="data_aquisicao" name="data_aquisicao" required><br>
+
+        <label for="estado_conservacao">Estado de Conservação:</label>
+        <input type="text" id="estado_conservacao" name="estado_conservacao" required><br>
+
+        <label for="localizacao_fisica">Localização Física:</label>
+        <input type="text" id="localizacao_fisica" name="localizacao_fisica" required><br>
+
+        <label for="capa_livro_uri">URL da Capa do Livro:</label>
+        <input type="text" id="capa_livro_uri" name="capa_livro_uri" required><br>
+
+        <button type="submit">Cadastrar Livro</button>
+    </form>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
