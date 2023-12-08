@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atualizar Material</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Add specific styles for this page if needed -->
+</head>
+<body>
+    <h1>Atualizar Material</h1>
+
+    <form method="post" action="{{ url_for('atualizar_material') }}">
+        <label for="numero_serie_atualizar">Pesquisar por Número de Série:</label>
+        <input type="text" id="numero_serie_atualizar" name="numero_serie_atualizar">
+        <button type="submit">Pesquisar Material</button>
+    </form>
+
+    {% if mensagem %}
+        <div class="message {{ mensagem.classe }}">
+            <p>{{ mensagem.conteudo }}</p>
+        </div>
+    {% endif %}
+
+    <!-- Formulário para atualizar material com campos preenchidos automaticamente -->
+    <form method="post" action="{{ url_for('atualizar_material') }}">
+        <label for="descricao">Nova Descrição:</label>
+        <textarea id="descricao" name="descricao" rows="4" required></textarea>
+
+        <label for="categoria">Nova Categoria:</label>
+        <input type="text" id="categoria" name="categoria" required>
+
+        <!-- Add other fields for update as needed -->
+
+        <button type="submit">Atualizar Material</button>
+    </form>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

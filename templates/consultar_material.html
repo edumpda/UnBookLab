@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultar Material</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Add specific styles for this page if needed -->
+</head>
+<body>
+    <h1>Consultar Material</h1>
+
+    <form method="post" action="{{ url_for('consultar_material') }}">
+        <label for="numero_serie_consulta">Pesquisar por Número de Série:</label>
+        <input type="text" id="numero_serie_consulta" name="numero_serie_consulta">
+        <button type="submit">Consultar Material</button>
+    </form>
+
+    <div id="material_info"></div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

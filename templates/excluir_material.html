@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excluir Material</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Add specific styles for this page if needed -->
+</head>
+<body>
+    <h1>Excluir Material</h1>
+
+    <form method="post" action="{{ url_for('excluir_material') }}">
+        <label for="numero_serie_excluir">Pesquisar por Número de Série:</label>
+        <input type="text" id="numero_serie_excluir" name="numero_serie_excluir">
+        <button type="submit">Excluir Material</button>
+    </form>
+
+    <!-- Exibição de mensagens de sucesso ou erro -->
+    <div class="message {{ mensagem.classe }}">{{ mensagem.conteudo }}</div>
+
+    <ul>
+        <li><a href="{{ url_for('materiais_crud') }}">Voltar ao CRUD de Materiais</a></li>
+    </ul>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
