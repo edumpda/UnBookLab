@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRUD de Livros</title>
+    <title>CRUD de Materiais Didáticos</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
         body {
@@ -44,17 +44,22 @@
         a:hover {
             background-color: #2980b9;
         }
+
+        /* Adicionei um estilo para destacar o link ativo */
+        a.active {
+            background-color: #16a085;
+        }
     </style>
 </head>
 <body>
-    <h1>CRUD de Livros</h1>
+    <h1>CRUD de Materiais Didáticos</h1>
 
     <ul>
-        <li><a href="{{ url_for('add_livro') }}">Cadastrar Livro</a></li>
-        <li><a href="{{ url_for('get_livro') }}">Consultar Livro</a></li>
-        <li><a href="{{ url_for('update_livro') }}">Atualizar Livro</a></li>
-        <li><a href="{{ url_for('delete_livro') }}">Excluir Livro</a></li>
-        <li><a href="{{ url_for('get_livros') }}">Listar Todos os Livros</a></li>
+        <li><a href="{{ url_for('add_material') }}">Cadastrar Material</a></li>
+        <li><a href="{{ url_for('get_material') }}">Consultar Material</a></li>
+        <li><a href="{{ url_for('update_material') }}">Atualizar Material</a></li>
+        <li><a href="{{ url_for('delete_material') }}">Excluir Material</a></li>
+        <li><a href="{{ url_for('get_materiais') }}">Listar Todos os Materiais</a></li>
         <li><a href="{{ url_for('index') }}">Voltar à Página Inicial</a></li>
     </ul>
 
