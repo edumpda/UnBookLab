@@ -13,17 +13,22 @@ class Livros(db.Model):
     LocalizacaoFisica = db.Column(db.String(255))
     CapaLivroURI = db.Column(db.String(255))
 
+
 class MaterialDidatico(db.Model):
-    ID = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    Descricao = db.Column(db.Text)
-    Categoria = db.Column(db.String(50))
-    NumeroSerie = db.Column(db.String(20))
-    DataAquisicao = db.Column(db.Date)
+    __tablename__ = 'materiaisdidaticos'  # Defina o nome correto da tabela no banco de dados
+
+    ID = db.Column(db.Integer, primary_key=True)
+    Descricao = db.Column(db.String(255))
+    Categoria = db.Column(db.String(255))
+    NumeroSerie = db.Column(db.String(50))
+    DataAquisicao = db.Column(db.Date, default=db.func.current_date())
     EstadoConservacao = db.Column(db.String(50))
     LocalizacaoFisica = db.Column(db.String(255))
     FotoMaterialURI = db.Column(db.String(255))
 
 class Usuario(db.Model):
+    __tablename__ = 'usuarios'
+
     ID = db.Column(db.Integer, primary_key=True, autoincrement=True)
     Nome = db.Column(db.String(255))
     Sobrenome = db.Column(db.String(255))
@@ -33,14 +38,14 @@ class Usuario(db.Model):
     FotoUsuarioURI = db.Column(db.String(255))
 
 class Emprestimo(db.Model):
-    ID = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    IDUsuario = db.Column(db.Integer, db.ForeignKey('usuario.ID'))
-    IDLivro = db.Column(db.String(13), db.ForeignKey('livros.ISBN'))
-    IDMaterialDidatico = db.Column(db.Integer, db.ForeignKey('material_didatico.ID'))
-    DataEmprestimo = db.Column(db.Date)
+    __tablename__ = 'emprestimos'
+
+    ID = db.Column(db.Integer, primary_key=True)
+    IDUsuario = db.Column(db.Integer, db.ForeignKey('usuarios.ID'))  # Adicione a chave estrangeira para usuarios
+    IDLivro = db.Column(db.String(20), db.ForeignKey('livros.ISBN'))
+    IDMaterialDidatico = db.Column(db.Integer, db.ForeignKey('materiaisdidaticos.ID'))
+    DataEmprestimo = db.Column(db.Date, default=db.func.current_date())
     DataDevolucaoPrevista = db.Column(db.Date)
     Status = db.Column(db.String(50))
 
-    usuario = db.relationship('Usuario', foreign_keys=[IDUsuario])
-    livro = db.relationship('Livros', foreign_keys=[IDLivro])
-    material_didatico = db.relationship('MaterialDidatico', foreign_keys=[IDMaterialDidatico])
+    usuario = db.relationship('Usuario', backref=db.backref('emprestimos', lazy='dynamic'))

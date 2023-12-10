@@ -186,59 +186,94 @@ def livros_crud():
     return render_template('livros_crud.html')
 
 ####### material didatico ########################################################################################################
-
-
-@app.route('/add_material')
+@app.route('/add_material', methods=['GET', 'POST'])
 def add_material():
-    material = MaterialDidatico(
-        # ID = db.Column(db.Integer, primary_key=True, autoincrement=True)
-        Descricao="desc",
-        Categoria="vateg",
-        NumeroSerie="123",
-        EstadoConservacao="afaf",
-        LocalizacaoFisica="sehfjk",
-        FotoMaterialURI="dhjsgf",
-    )
-    db.session.add(material)
-    db.session.commit()
-    return 'material add'
+    mensagem = None
 
+    if request.method == 'POST':
+        descricao = request.form['descricao']
+        categoria = request.form['categoria']
+        numero_serie = request.form['numero_serie']
+        estado_conservacao = request.form['estado_conservacao']
+        localizacao_fisica = request.form['localizacao_fisica']
+        foto_material_uri = request.form['foto_material_uri']
 
-@app.route('/update_material/<id>', methods=['PUT'])
+        material = MaterialDidatico(
+            Descricao=descricao,
+            Categoria=categoria,
+            NumeroSerie=numero_serie,
+            EstadoConservacao=estado_conservacao,
+            LocalizacaoFisica=localizacao_fisica,
+            FotoMaterialURI=foto_material_uri
+        )
+        try:
+            db.session.add(material)
+            db.session.commit()
+            mensagem = {'conteudo': 'Material didático adicionado com sucesso!', 'classe': 'mensagem-sucesso'}
+        except Exception as e:
+            db.session.rollback()
+            mensagem = {'conteudo': f'Erro ao adicionar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
+
+    return render_template('cadastrar_material.html', mensagem=mensagem)
+
+@app.route('/materiais_crud')
+def materiais_crud():
+    materiais = MaterialDidatico.query.all()
+    return render_template('material_crud.html', materiais=materiais)
+
+@app.route('/get_materiais')
+def get_materiais():
+    materiais = MaterialDidatico.query.all()
+    materiais_json = [{'ID': material.ID, 'Descricao': material.Descricao, 'Categoria': material.Categoria} for material in materiais]
+    return jsonify(materiais_json)
+
+@app.route('/update_material/<id>', methods=['GET', 'POST'])
 def update_material(id):
+    mensagem = None
     material = MaterialDidatico.query.get(id)
-    if material is None:
-        return jsonify({'error': 'material não encontrado'}), 404
 
-    data = request.json
-    material.Descricao = data.get('Descricao', material.Descricao)
-    material.Categoria = data.get('Categoria', material.Categoria)
-    material.NumeroSerie = data.get('NumeroSerie', material.NumeroSerie)
-    # material.DataAquisicao = data.get('DataAquisicao', material.DataAquisicao)
-    material.EstadoConservacao = data.get(
-        'EstadoConservacao', material.EstadoConservacao)
-    material.LocalizacaoFisica = data.get(
-        'LocalizacaoFisica', material.LocalizacaoFisica)
-    material.FotoMaterialURI = data.get(
-        'FotoMaterialUri', material.FotoMaterialURI)
+    if request.method == 'POST':
+        if material:
+            data = request.form
+            material.Descricao = data.get('descricao', material.Descricao)
+            material.Categoria = data.get('categoria', material.Categoria)
+            material.NumeroSerie = data.get('numero_serie', material.NumeroSerie)
+            material.EstadoConservacao = data.get('estado_conservacao', material.EstadoConservacao)
+            material.LocalizacaoFisica = data.get('localizacao_fisica', material.LocalizacaoFisica)
+            material.FotoMaterialURI = data.get('foto_material_uri', material.FotoMaterialURI)
 
-    db.session.commit()
-    return jsonify({'message': 'Material atualizado com sucesso'}), 200
+            try:
+                db.session.commit()
+                mensagem = {'conteudo': 'Material didático atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
+            except Exception as e:
+                db.session.rollback()
+                mensagem = {'conteudo': f'Erro ao atualizar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
+        else:
+            mensagem = {'conteudo': 'Material didático não encontrado para atualização.', 'classe': 'mensagem-erro'}
 
+    return render_template('update_material.html', material=material, mensagem=mensagem)
 
-@app.route('/delete_material/<id>', methods=['DELETE'])
+@app.route('/delete_material/<id>', methods=['GET', 'POST'])
 def delete_material(id):
-    livro = MaterialDidatico.query.get(id)
-    if livro is None:
-        return jsonify({'error': 'Material não encontrado'}), 404
+    mensagem = None
+    material = MaterialDidatico.query.get(id)
 
-    db.session.delete(livro)
-    db.session.commit()
-    return jsonify({'message': 'Material excluído com sucesso'}), 200
+    if request.method == 'POST':
+        if material:
+            try:
+                db.session.delete(material)
+                db.session.commit()
+                mensagem = {'conteudo': 'Material didático excluído com sucesso!', 'classe': 'mensagem-sucesso'}
+            except Exception as e:
+                db.session.rollback()
+                mensagem = {'conteudo': f'Erro ao excluir o material didático: {str(e)}', 'classe': 'mensagem-erro'}
+        else:
+            mensagem = {'conteudo': 'Material didático não encontrado para exclusão.', 'classe': 'mensagem-erro'}
 
+    return render_template('delete_material.html', material=material, mensagem=mensagem)
 
 @app.route('/get_material/<id>')
-def get_material(id):
+def get_material(id=None):
     material = MaterialDidatico.query.get(id)
     if material is None:
         return jsonify({'error': 'Material não encontrado'}), 404
@@ -248,7 +283,7 @@ def get_material(id):
         'Descricao': material.Descricao,
         'Categoria': material.Categoria,
         'NumeroSerie': material.NumeroSerie,
-        'DataAquisicao': material.DataAquisicao,
+        'DataAquisicao': str(material.DataAquisicao),
         'EstadoConservacao': material.EstadoConservacao,
         'LocalizacaoFisica': material.LocalizacaoFisica,
         'FotoMaterialURI': material.FotoMaterialURI

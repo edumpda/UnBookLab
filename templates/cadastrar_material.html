@@ -3,28 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastrar Material</title>
+    <title>Cadastrar Material Didático</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
         body {
             font-family: 'Arial', sans-serif;
+<<<<<<< Updated upstream
             background-color: #f8f8f8;
             margin: 0;
             padding: 0;
+=======
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+>>>>>>> Stashed changes
         }
 
         h1 {
             text-align: center;
             color: #333;
+<<<<<<< Updated upstream
         }
 
         form {
             max-width: 600px;
             margin: 20px auto;
+=======
+            margin: 0;
+            padding: 20px;
+        }
+
+        form {
+>>>>>>> Stashed changes
             background-color: #fff;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+<<<<<<< Updated upstream
+=======
+            width: 300px;
+>>>>>>> Stashed changes
         }
 
         label {
@@ -33,6 +56,7 @@
             color: #555;
         }
 
+<<<<<<< Updated upstream
         input,
         textarea,
         button {
@@ -46,11 +70,24 @@
         }
 
         button {
+=======
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        input[type="submit"] {
+>>>>>>> Stashed changes
             background-color: #4caf50;
             color: #fff;
             cursor: pointer;
         }
 
+<<<<<<< Updated upstream
         button:hover {
             background-color: #45a049;
         }
@@ -124,6 +161,40 @@
         <a href="{{ url_for('atualizar_material') }}">Atualizar Material</a>
         <a href="{{ url_for('excluir_material') }}">Excluir Material</a>
     </div>
+=======
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cadastrar Material Didático</h1>
+    
+    <!-- Formulário para cadastrar material -->
+    <form action="{{ url_for('add_material') }}" method="post">
+        <!-- Campos do formulário -->
+        <label for="descricao">Descrição:</label>
+        <input type="text" name="descricao" required>
+
+        <label for="categoria">Categoria:</label>
+        <input type="text" name="categoria" required>
+
+        <label for="numero_serie">Número de Série:</label>
+        <input type="text" name="numero_serie" required>
+
+        <label for="estado_conservacao">Estado de Conservação:</label>
+        <input type="text" name="estado_conservacao" required>
+
+        <label for="localizacao_fisica">Localização Física:</label>
+        <input type="text" name="localizacao_fisica" required>
+
+        <label for="foto_material_uri">URL da Foto:</label>
+        <input type="text" name="foto_material_uri" required>
+
+        <!-- Botão de envio -->
+        <input type="submit" value="Cadastrar Material">
+    </form>
+>>>>>>> Stashed changes
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
