@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atualizar Material Didático</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            color: #333;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        form {
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: left;
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        a {
+            text-decoration: none;
+            color: #3498db;
+            display: block;
+            margin-top: 10px;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Atualizar Material Didático</h1>
+    <!-- Se houver uma mensagem de sucesso ou erro, exiba-a aqui -->
+    {% if mensagem %}
+        <div class="{{ mensagem.classe }}">{{ mensagem.conteudo }}</div>
+    {% endif %}
+    <!-- Formulário para atualizar material didático -->
+    <form method="post">
+        <!-- Campos do formulário (preenchidos com os dados atuais) -->
+        <label for="descricao">Descrição:</label>
+        <input type="text" name="descricao" value="{{ material.Descricao }}" required>
+        <br>
+        <label for="categoria">Categoria:</label>
+        <input type="text" name="categoria" value="{{ material.Categoria }}" required>
+        <br>
+        <label for="numero_serie">Número de Série:</label>
+        <input type="text" name="numero_serie" value="{{ material.NumeroSerie }}" required>
+        <br>
+        <label for="estado_conservacao">Estado de Conservação:</label>
+        <input type="text" name="estado_conservacao" value="{{ material.EstadoConservacao }}" required>
+        <br>
+        <label for="localizacao_fisica">Localização Física:</label>
+        <input type="text" name="localizacao_fisica" value="{{ material.LocalizacaoFisica }}" required>
+        <br>
+        <label for="foto_material_uri">URL da Foto:</label>
+        <input type="text" name="foto_material_uri" value="{{ material.FotoMaterialURI }}" required>
+        <br>
+        <button type="submit">Atualizar</button>
+    </form>
+    <!-- Link para voltar à página principal -->
+    <a href="{{ url_for('index') }}">Voltar para a página principal</a>
+</body>
+</html>
