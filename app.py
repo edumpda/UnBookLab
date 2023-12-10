@@ -186,6 +186,12 @@ def livros_crud():
     return render_template('livros_crud.html')
 
 ####### material didatico ########################################################################################################
+<<<<<<< Updated upstream
+@app.route('/add_material', methods=['GET', 'POST'])
+def add_material():
+    mensagem = None
+=======
+
 @app.route('/add_material', methods=['GET', 'POST'])
 def add_material():
     mensagem = None
@@ -198,6 +204,34 @@ def add_material():
         localizacao_fisica = request.form['localizacao_fisica']
         foto_material_uri = request.form['foto_material_uri']
 
+        material = MaterialDidatico(
+            Descricao=descricao,
+            Categoria=categoria,
+            NumeroSerie=numero_serie,
+            EstadoConservacao=estado_conservacao,
+            LocalizacaoFisica=localizacao_fisica,
+            FotoMaterialURI=foto_material_uri
+        )
+        try:
+            db.session.add(material)
+            db.session.commit()
+            mensagem = {'conteudo': 'Material didático adicionado com sucesso!', 'classe': 'mensagem-sucesso'}
+        except Exception as e:
+            db.session.rollback()
+            mensagem = {'conteudo': f'Erro ao adicionar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
+
+    return render_template('cadastrar_material.html', mensagem=mensagem)
+>>>>>>> Stashed changes
+
+    if request.method == 'POST':
+        descricao = request.form['descricao']
+        categoria = request.form['categoria']
+        numero_serie = request.form['numero_serie']
+        estado_conservacao = request.form['estado_conservacao']
+        localizacao_fisica = request.form['localizacao_fisica']
+        foto_material_uri = request.form['foto_material_uri']
+
+<<<<<<< Updated upstream
         material = MaterialDidatico(
             Descricao=descricao,
             Categoria=categoria,
@@ -231,6 +265,31 @@ def get_materiais():
 def update_material(id):
     mensagem = None
     material = MaterialDidatico.query.get(id)
+=======
+@app.route('/update_material', methods=['GET', 'POST'])
+def update_material():
+    mensagem = None
+    material = None
+
+    if request.method == 'POST':
+        id_pesquisa = request.form.get('id_pesquisa')
+        # Certifique-se de que ID não seja None antes de fazer a consulta
+        if id_pesquisa is not None:
+            material = MaterialDidatico.query.get(id_pesquisa)
+
+        if material:
+            return redirect(url_for('update_material_form', id=id_pesquisa))
+        else:
+            mensagem = {'conteudo': 'Material didático não encontrado.', 'classe': 'mensagem-erro'}
+
+    return render_template('update_material_pesquisa.html', mensagem=mensagem)
+
+
+@app.route('/update_material/<id>', methods=['GET', 'POST'])
+def update_material_form(id):
+    material = MaterialDidatico.query.get(id)
+    mensagem = None
+>>>>>>> Stashed changes
 
     if request.method == 'POST':
         if material:
@@ -250,15 +309,32 @@ def update_material(id):
                 mensagem = {'conteudo': f'Erro ao atualizar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
         else:
             mensagem = {'conteudo': 'Material didático não encontrado para atualização.', 'classe': 'mensagem-erro'}
+<<<<<<< Updated upstream
+=======
+    
+    return render_template('update_material.html', material=material, mensagem=mensagem)
+>>>>>>> Stashed changes
 
     return render_template('update_material.html', material=material, mensagem=mensagem)
 
+<<<<<<< Updated upstream
 @app.route('/delete_material/<id>', methods=['GET', 'POST'])
 def delete_material(id):
     mensagem = None
     material = MaterialDidatico.query.get(id)
 
     if request.method == 'POST':
+=======
+@app.route('/delete_material', methods=['GET', 'POST'])
+def delete_material():
+    mensagem = None
+    material = None
+
+    if request.method == 'POST':
+        id = request.form.get('id')
+        material = MaterialDidatico.query.get(id)
+
+>>>>>>> Stashed changes
         if material:
             try:
                 db.session.delete(material)
@@ -269,9 +345,15 @@ def delete_material(id):
                 mensagem = {'conteudo': f'Erro ao excluir o material didático: {str(e)}', 'classe': 'mensagem-erro'}
         else:
             mensagem = {'conteudo': 'Material didático não encontrado para exclusão.', 'classe': 'mensagem-erro'}
+<<<<<<< Updated upstream
+=======
+
+    return render_template('delete_material.html', material=material, mensagem=mensagem)
+>>>>>>> Stashed changes
 
     return render_template('delete_material.html', material=material, mensagem=mensagem)
 
+<<<<<<< Updated upstream
 @app.route('/get_material/<id>')
 def get_material(id=None):
     material = MaterialDidatico.query.get(id)
@@ -288,8 +370,42 @@ def get_material(id=None):
         'LocalizacaoFisica': material.LocalizacaoFisica,
         'FotoMaterialURI': material.FotoMaterialURI
     }
+=======
 
-    return jsonify(material_json)
+>>>>>>> Stashed changes
+
+@app.route('/get_material', methods=['GET', 'POST'])
+def get_material():
+    material = None
+    mensagem = None
+
+    if request.method == 'POST':
+        id = request.form.get('id')
+
+        if not id:
+            mensagem = {'conteudo': 'ID não fornecido', 'classe': 'mensagem-erro'}
+        else:
+            material = MaterialDidatico.query.get(id)
+
+            if material is None:
+                mensagem = {'conteudo': 'Material didático não encontrado.', 'classe': 'mensagem-erro'}
+
+    return render_template('get_material.html', material=material, mensagem=mensagem)
+
+
+@app.route('/get_materiais')
+def get_materiais():
+    materiais = MaterialDidatico.query.all()
+    materiais_json = [{'ID': material.ID, 'Descricao': material.Descricao, 'Categoria': material.Categoria} for material in materiais]
+    return jsonify(materiais_json)
+
+
+@app.route('/materiais_crud')
+def materiais_crud():
+    return render_template('materiais_crud.html')
+
+
+
 
 # Usuarios ---------------------------------------------------
 

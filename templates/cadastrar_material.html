@@ -9,6 +9,7 @@
         body {
             font-family: 'Arial', sans-serif;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             background-color: #f8f8f8;
             margin: 0;
             padding: 0;
@@ -40,19 +41,40 @@
 
         form {
 >>>>>>> Stashed changes
+=======
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            color: #333;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        form {
+            width: 50%;
+            margin: 0 auto;
+>>>>>>> Stashed changes
             background-color: #fff;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
             width: 300px;
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         }
 
         label {
             display: block;
             margin-bottom: 8px;
+<<<<<<< Updated upstream
             color: #555;
         }
 
@@ -197,5 +219,64 @@
 >>>>>>> Stashed changes
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+=======
+            color: #333;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        a {
+            text-decoration: none;
+            color: #3498db;
+            display: block;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cadastrar Material Didático</h1>
+    <!-- Se houver uma mensagem de sucesso ou erro, exiba-a aqui -->
+    {% if mensagem %}
+        <div class="{{ mensagem.classe }}">{{ mensagem.conteudo }}</div>
+    {% endif %}
+    <!-- Formulário para cadastrar material didático -->
+    <form method="post">
+        <!-- Campos do formulário -->
+        <label for="descricao">Descrição:</label>
+        <input type="text" name="descricao" required>
+        <label for="categoria">Categoria:</label>
+        <input type="text" name="categoria" required>
+        <label for="numero_serie">Número de Série:</label>
+        <input type="text" name="numero_serie" required>
+        <label for="estado_conservacao">Estado de Conservação:</label>
+        <input type="text" name="estado_conservacao" required>
+        <label for="localizacao_fisica">Localização Física:</label>
+        <input type="text" name="localizacao_fisica" required>
+        <label for="foto_material_uri">URL da Foto:</label>
+        <input type="text" name="foto_material_uri" required>
+        <button type="submit">Cadastrar</button>
+    </form>
+    <!-- Link para voltar à página principal -->
+    <a href="{{ url_for('index') }}">Voltar para a página principal</a>
+>>>>>>> Stashed changes
 </body>
 </html>

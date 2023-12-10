@@ -5,9 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Biblioteca</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            color: #333;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        a {
+            text-decoration: none;
+            color: #fff;
+            background-color: #3498db;
+            padding: 15px 30px;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        a:hover {
+            background-color: #2980b9;
+        }
+
+        p {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
     <h1>Biblioteca</h1>
+<<<<<<< Updated upstream
     <a href="{{ url_for('livros_crud') }}">Livros</a>
 <<<<<<< Updated upstream
    <!-- <a href="{{ url_for('cadastrar_material') }}">Cadastrar Material</a> -->
@@ -16,5 +51,12 @@
 >>>>>>> Stashed changes
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+=======
+    <a href="{{ url_for('livros_crud') }}">Gerenciar Livros</a>
+    <a href="{{ url_for('materiais_crud') }}">Gerenciar Materiais Didáticos</a>
+    <a href="{{ url_for('get_livros') }}">Listar Todos os Livros</a>
+    <a href="{{ url_for('get_materiais') }}">Listar Todos os Materiais Didáticos</a>
+    <p>Seja bem-vindo à biblioteca virtual!</p>
+>>>>>>> Stashed changes
 </body>
 </html>

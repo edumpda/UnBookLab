@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listar Materiais Didáticos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            color: #333;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        li {
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            padding: 20px;
+            text-align: left;
+        }
+
+        p {
+            margin: 0 0 10px;
+            color: #333;
+        }
+
+        a {
+            text-decoration: none;
+            color: #3498db;
+            display: block;
+            margin-top: 10px;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Listar Materiais Didáticos</h1>
+    <!-- Se houver uma mensagem de erro, exiba-a aqui -->
+    {% if mensagem %}
+        <div class="{{ mensagem.classe }}">{{ mensagem.conteudo }}</div>
+    {% endif %}
+    <!-- Lista de materiais didáticos -->
+    <ul>
+        {% for material in materiais %}
+            <li>
+                <p>ID: {{ material.ID }}</p>
+                <p>Descrição: {{ material.Descricao }}</p>
+                <p>Categoria: {{ material.Categoria }}</p>
+                <p><a href="{{ url_for('get_material', id=material.ID) }}">Detalhes</a></p>
+            </li>
+        {% endfor %}
+    </ul>
+    <!-- Link para voltar à página principal -->
+    <a href="{{ url_for('index') }}">Voltar para a página principal</a>
+</body>
+</html>

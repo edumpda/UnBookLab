@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Material Didático</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            color: #333;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        form {
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        input {
+            width: 60%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        p {
+            margin-bottom: 10px;
+        }
+
+        a {
+            text-decoration: none;
+            color: #3498db;
+            display: block;
+            margin-top: 10px;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Detalhes do Material Didático</h1>
+    <!-- Se houver uma mensagem de erro, exiba-a aqui -->
+    {% if mensagem %}
+        <div class="{{ mensagem.classe }}">{{ mensagem.conteudo }}</div>
+    {% endif %}
+    <!-- Formulário para buscar material por ID -->
+    <form method="post">
+        <label for="id">ID do Material Didático:</label>
+        <input type="text" id="id" name="id">
+        <button type="submit">Buscar</button>
+    </form>
+    <!-- Dados do material didático -->
+    {% if material %}
+        <p>ID: {{ material.ID }}</p>
+        <p>Descrição: {{ material.Descricao }}</p>
+        <p>Categoria: {{ material.Categoria }}</p>
+        <p>Número de Série: {{ material.NumeroSerie }}</p>
+        <p>Estado de Conservação: {{ material.EstadoConservacao }}</p>
+        <p>Localização Física: {{ material.LocalizacaoFisica }}</p>
+        <p>URL da Foto: {{ material.FotoMaterialURI }}</p>
+    {% else %}
+        
+    {% endif %}
+    <!-- Link para voltar à página principal -->
+    <a href="{{ url_for('index') }}">Voltar para a página principal</a>
+</body>
+</html>
