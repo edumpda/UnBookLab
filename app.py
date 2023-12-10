@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from models import db, Livros, MaterialDidatico, Usuario, Emprestimo
 from datetime import datetime
@@ -6,7 +6,7 @@ import json
 
 app = Flask(__name__)
 # COLOQUE A URL DO SEU BANCO NA LINHA 9, AINDA NÃO ESTÁ INTEGRADO
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:#teste123321@localhost:3306/Biblioteca'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:lucasql@localhost:3306/biblioteca'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'chave'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
@@ -19,7 +19,7 @@ db.init_app(app)
 
 @app.route('/')
 def index():
-    return 'Hello World'
+    return render_template('index.html')
 
 
 @app.route('/create_db')
@@ -28,149 +28,304 @@ def create_db():
     return 'Banco de dados criado'
 
 
-@app.route('/add_livro')
+@app.route('/add_livro', methods=['GET', 'POST'])
 def add_livro():
-    livro = Livros(ISBN='9788575221631', Titulo='Guia Mangá de Bancos de Dados', Autor='Mana Takahashi', Descricao='Descrição grande demais', Categoria='Educação', DataAquisicao=datetime.strptime(
-        '2023-11-19', '%Y-%m-%d').date(), EstadoConservacao='Novo', LocalizacaoFisica='Estante 1', CapaLivroURI='https://s3-sa-east-1.amazonaws.com/catalogodasartes/obra_13269947.jpg')
-    db.session.add(livro)
-    db.session.commit()
-    return 'Livro adicionado'
+    mensagem = None
+
+    if request.method == 'POST':
+        isbn = request.form['isbn']
+        titulo = request.form['titulo']
+        autor = request.form['autor']
+        descricao = request.form['descricao']
+        categoria = request.form['categoria']
+        data_aquisicao = datetime.strptime(request.form['data_aquisicao'], '%Y-%m-%d').date()
+        estado_conservacao = request.form['estado_conservacao']
+        localizacao_fisica = request.form['localizacao_fisica']
+        capa_livro_uri = request.form['capa_livro_uri']
+
+        livro = Livros(
+            ISBN=isbn,
+            Titulo=titulo,
+            Autor=autor,
+            Descricao=descricao,
+            Categoria=categoria,
+            DataAquisicao=data_aquisicao,
+            EstadoConservacao=estado_conservacao,
+            LocalizacaoFisica=localizacao_fisica,
+            CapaLivroURI=capa_livro_uri
+        )
+        try:
+            db.session.add(livro)
+            db.session.commit()
+            mensagem = {'conteudo': 'Livro adicionado com sucesso!', 'classe': 'mensagem-sucesso'}
+        except Exception as e:
+            db.session.rollback()
+            mensagem = {'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
+
+    return render_template('cadastrar_livro.html', mensagem=mensagem)
 
 
-@app.route('/update_livro/<isbn>', methods=['PUT'])
-def update_livro(isbn):
+
+@app.route('/update_livro', methods=['GET', 'POST'])
+def update_livro():
+    mensagem = None
+    livro = None
+
+    if request.method == 'POST':
+        isbn_pesquisa = request.form.get('isbn_pesquisa')
+        app.logger.info(f"Formulário Recebido: {request.form}")
+        print(f"Conteúdo do Formulário: {request.form}")
+        print(f"ISBN Pesquisado: {isbn_pesquisa}")
+
+        # Certifique-se de que ISBN não seja None antes de fazer a consulta
+        if isbn_pesquisa is not None:
+            livro = Livros.query.get(isbn_pesquisa)
+
+        if livro:
+            return redirect(url_for('update_livro_form', isbn=isbn_pesquisa))
+        else:
+            mensagem = {'conteudo': 'Livro não encontrado.', 'classe': 'mensagem-erro'}
+
+    return render_template('update_livro_pesquisa.html', mensagem=mensagem)
+
+
+@app.route('/update_livro/<isbn>', methods=['GET', 'POST'])
+def update_livro_form(isbn):
     livro = Livros.query.get(isbn)
-    if livro is None:
-        return jsonify({'error': 'Livro não encontrado'}), 404
+    mensagem = None
 
-    data = request.json
-    livro.Titulo = data.get('Titulo', livro.Titulo)
-    livro.Autor = data.get('Autor', livro.Autor)
-    livro.Descricao = data.get('Descricao', livro.Descricao)
-    livro.Categoria = data.get('Categoria', livro.Categoria)
-    data_aquisicao = data.get('DataAquisicao', str(livro.DataAquisicao))
-    livro.DataAquisicao = datetime.strptime(data_aquisicao, '%Y-%m-%d').date()
-    livro.EstadoConservacao = data.get(
-        'EstadoConservacao', livro.EstadoConservacao)
-    livro.LocalizacaoFisica = data.get(
-        'LocalizacaoFisica', livro.LocalizacaoFisica)
-    livro.CapaLivroURI = data.get('CapaLivroURI', livro.CapaLivroURI)
+    if request.method == 'POST':
+        if livro:
+            data = request.form
+            livro.Titulo = data.get('titulo', livro.Titulo)
+            livro.Autor = data.get('autor', livro.Autor)
+            livro.Descricao = data.get('descricao', livro.Descricao)
+            livro.Categoria = data.get('categoria', livro.Categoria)
+            livro.DataAquisicao = datetime.strptime(data.get('data_aquisicao', str(livro.DataAquisicao)), '%Y-%m-%d').date()
+            livro.EstadoConservacao = data.get('estado_conservacao', livro.EstadoConservacao)
+            livro.LocalizacaoFisica = data.get('localizacao_fisica', livro.LocalizacaoFisica)
+            livro.CapaLivroURI = data.get('capa_livro_uri', livro.CapaLivroURI)
 
-    db.session.commit()
-    return jsonify({'message': 'Livro atualizado com sucesso'}), 200
-
-
-@app.route('/delete_livro/<isbn>', methods=['DELETE'])
-def delete_livro(isbn):
-    livro = Livros.query.get(isbn)
-    if livro is None:
-        return jsonify({'error': 'Livro não encontrado'}), 404
-
-    db.session.delete(livro)
-    db.session.commit()
-    return jsonify({'message': 'Livro excluído com sucesso'}), 200
+            try:
+                db.session.commit()
+                mensagem = {'conteudo': 'Livro atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
+            except Exception as e:
+                db.session.rollback()
+                mensagem = {'conteudo': f'Erro ao atualizar o livro: {str(e)}', 'classe': 'mensagem-erro'}
+        else:
+            mensagem = {'conteudo': 'Livro não encontrado para atualização.', 'classe': 'mensagem-erro'}
+    
+    return render_template('update_livro.html', livro=livro, mensagem=mensagem)
 
 
-@app.route('/get_livro/<isbn>')
-def get_livro(isbn):
-    livro = Livros.query.get(isbn)
-    if livro is None:
-        return jsonify({'error': 'Livro não encontrado'}), 404
 
-    livro_json = {
-        'ISBN': livro.ISBN,
-        'Titulo': livro.Titulo,
-        'Autor': livro.Autor,
-        'Descricao': livro.Descricao,
-        'Categoria': livro.Categoria,
-        'DataAquisicao': str(livro.DataAquisicao),
-        'EstadoConservacao': livro.EstadoConservacao,
-        'LocalizacaoFisica': livro.LocalizacaoFisica,
-        'CapaLivroURI': livro.CapaLivroURI
-    }
 
-    return jsonify(livro_json)
+@app.route('/delete_livro', methods=['GET', 'POST'])
+def delete_livro():
+    mensagem = None
+    livro = None
+
+    if request.method == 'POST':
+        isbn = request.form.get('isbn')
+        livro = Livros.query.get(isbn)
+
+        if livro:
+            try:
+                db.session.delete(livro)
+                db.session.commit()
+                mensagem = {'conteudo': 'Livro excluído com sucesso!', 'classe': 'mensagem-sucesso'}
+            except Exception as e:
+                db.session.rollback()
+                mensagem = {'conteudo': f'Erro ao excluir o livro: {str(e)}', 'classe': 'mensagem-erro'}
+        else:
+            mensagem = {'conteudo': 'Livro não encontrado para exclusão.', 'classe': 'mensagem-erro'}
+
+    return render_template('delete_livro.html', livro=livro, mensagem=mensagem)
+
+
+@app.route('/get_livro', methods=['GET', 'POST'])
+def get_livro():
+    if request.method == 'POST':
+        isbn = request.form.get('isbn')
+
+        if not isbn:
+            return jsonify({'error': 'ISBN não fornecido'}), 400
+
+        livro = Livros.query.get(isbn)
+
+        if livro is None:
+            return jsonify({'error': 'Livro não encontrado'}), 404
+
+        livro_json = {
+            'ISBN': livro.ISBN,
+            'Titulo': livro.Titulo,
+            'Autor': livro.Autor,
+            'Descricao': livro.Descricao,
+            'Categoria': livro.Categoria,
+            'DataAquisicao': str(livro.DataAquisicao),
+            'EstadoConservacao': livro.EstadoConservacao,
+            'LocalizacaoFisica': livro.LocalizacaoFisica,
+            'CapaLivroURI': livro.CapaLivroURI
+        }
+
+        return jsonify(livro_json)
+
+    return render_template('get_livro.html')
+
+
 
 
 @app.route('/get_livros')
 def get_livros():
-    from models import Livros
-
     livros = Livros.query.all()
-    livros_json = [{'ISBN': livro.ISBN, 'Titulo': livro.Titulo,
-                    'Autor': livro.Autor} for livro in livros]
+    livros_json = [{'ISBN': livro.ISBN, 'Titulo': livro.Titulo, 'Autor': livro.Autor} for livro in livros]
     return jsonify(livros_json)
+
+@app.route('/livros_crud')
+def livros_crud():
+    return render_template('livros_crud.html')
 
 ####### material didatico ########################################################################################################
 
 
-@app.route('/add_material')
+@app.route('/add_material', methods=['GET', 'POST'])
 def add_material():
-    material = MaterialDidatico(
-        # ID = db.Column(db.Integer, primary_key=True, autoincrement=True)
-        Descricao="desc",
-        Categoria="vateg",
-        NumeroSerie="123",
-        EstadoConservacao="afaf",
-        LocalizacaoFisica="sehfjk",
-        FotoMaterialURI="dhjsgf",
-    )
-    db.session.add(material)
-    db.session.commit()
-    return 'material add'
+    mensagem = None
+
+    if request.method == 'POST':
+        descricao = request.form['descricao']
+        categoria = request.form['categoria']
+        numero_serie = request.form['numero_serie']
+        estado_conservacao = request.form['estado_conservacao']
+        localizacao_fisica = request.form['localizacao_fisica']
+        foto_material_uri = request.form['foto_material_uri']
+
+        material = MaterialDidatico(
+            Descricao=descricao,
+            Categoria=categoria,
+            NumeroSerie=numero_serie,
+            EstadoConservacao=estado_conservacao,
+            LocalizacaoFisica=localizacao_fisica,
+            FotoMaterialURI=foto_material_uri
+        )
+        try:
+            db.session.add(material)
+            db.session.commit()
+            mensagem = {'conteudo': 'Material didático adicionado com sucesso!', 'classe': 'mensagem-sucesso'}
+        except Exception as e:
+            db.session.rollback()
+            mensagem = {'conteudo': f'Erro ao adicionar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
+
+    return render_template('cadastrar_material.html', mensagem=mensagem)
 
 
-@app.route('/update_material/<id>', methods=['PUT'])
-def update_material(id):
+@app.route('/update_material', methods=['GET', 'POST'])
+def update_material():
+    mensagem = None
+    material = None
+
+    if request.method == 'POST':
+        id_pesquisa = request.form.get('id_pesquisa')
+        # Certifique-se de que ID não seja None antes de fazer a consulta
+        if id_pesquisa is not None:
+            material = MaterialDidatico.query.get(id_pesquisa)
+
+        if material:
+            return redirect(url_for('update_material_form', id=id_pesquisa))
+        else:
+            mensagem = {'conteudo': 'Material didático não encontrado.', 'classe': 'mensagem-erro'}
+
+    return render_template('update_material_pesquisa.html', mensagem=mensagem)
+
+
+@app.route('/update_material/<id>', methods=['GET', 'POST'])
+def update_material_form(id):
     material = MaterialDidatico.query.get(id)
-    if material is None:
-        return jsonify({'error': 'material não encontrado'}), 404
+    mensagem = None
 
-    data = request.json
-    material.Descricao = data.get('Descricao', material.Descricao)
-    material.Categoria = data.get('Categoria', material.Categoria)
-    material.NumeroSerie = data.get('NumeroSerie', material.NumeroSerie)
-    # material.DataAquisicao = data.get('DataAquisicao', material.DataAquisicao)
-    material.EstadoConservacao = data.get(
-        'EstadoConservacao', material.EstadoConservacao)
-    material.LocalizacaoFisica = data.get(
-        'LocalizacaoFisica', material.LocalizacaoFisica)
-    material.FotoMaterialURI = data.get(
-        'FotoMaterialUri', material.FotoMaterialURI)
+    if request.method == 'POST':
+        if material:
+            data = request.form
+            material.Descricao = data.get('descricao', material.Descricao)
+            material.Categoria = data.get('categoria', material.Categoria)
+            material.NumeroSerie = data.get('numero_serie', material.NumeroSerie)
+            material.EstadoConservacao = data.get('estado_conservacao', material.EstadoConservacao)
+            material.LocalizacaoFisica = data.get('localizacao_fisica', material.LocalizacaoFisica)
+            material.FotoMaterialURI = data.get('foto_material_uri', material.FotoMaterialURI)
 
-    db.session.commit()
-    return jsonify({'message': 'Material atualizado com sucesso'}), 200
-
-
-@app.route('/delete_material/<id>', methods=['DELETE'])
-def delete_material(id):
-    livro = MaterialDidatico.query.get(id)
-    if livro is None:
-        return jsonify({'error': 'Material não encontrado'}), 404
-
-    db.session.delete(livro)
-    db.session.commit()
-    return jsonify({'message': 'Material excluído com sucesso'}), 200
+            try:
+                db.session.commit()
+                mensagem = {'conteudo': 'Material didático atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
+            except Exception as e:
+                db.session.rollback()
+                mensagem = {'conteudo': f'Erro ao atualizar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
+        else:
+            mensagem = {'conteudo': 'Material didático não encontrado para atualização.', 'classe': 'mensagem-erro'}
+    
+    return render_template('update_material.html', material=material, mensagem=mensagem)
 
 
-@app.route('/get_material/<id>')
-def get_material(id):
-    material = MaterialDidatico.query.get(id)
-    if material is None:
-        return jsonify({'error': 'Material não encontrado'}), 404
+@app.route('/delete_material', methods=['GET', 'POST'])
+def delete_material():
+    mensagem = None
+    material = None
 
-    material_json = {
-        'ID': material.ID,
-        'Descricao': material.Descricao,
-        'Categoria': material.Categoria,
-        'NumeroSerie': material.NumeroSerie,
-        'DataAquisicao': material.DataAquisicao,
-        'EstadoConservacao': material.EstadoConservacao,
-        'LocalizacaoFisica': material.LocalizacaoFisica,
-        'FotoMaterialURI': material.FotoMaterialURI
-    }
+    if request.method == 'POST':
+        id = request.form.get('id')
+        material = MaterialDidatico.query.get(id)
 
-    return jsonify(material_json)
+        if material:
+            try:
+                db.session.delete(material)
+                db.session.commit()
+                mensagem = {'conteudo': 'Material didático excluído com sucesso!', 'classe': 'mensagem-sucesso'}
+            except Exception as e:
+                db.session.rollback()
+                mensagem = {'conteudo': f'Erro ao excluir o material didático: {str(e)}', 'classe': 'mensagem-erro'}
+        else:
+            mensagem = {'conteudo': 'Material didático não encontrado para exclusão.', 'classe': 'mensagem-erro'}
+
+    return render_template('delete_material.html', material=material, mensagem=mensagem)
+
+
+@app.route('/get_material', methods=['GET', 'POST'])
+def get_material():
+    if request.method == 'POST':
+        id = request.form.get('id')
+
+        if not id:
+            return jsonify({'error': 'ID não fornecido'}), 400
+
+        material = MaterialDidatico.query.get(id)
+
+        if material is None:
+            return jsonify({'error': 'Material didático não encontrado'}), 404
+
+        material_json = {
+            'ID': material.ID,
+            'Descricao': material.Descricao,
+            'Categoria': material.Categoria,
+            'NumeroSerie': material.NumeroSerie,
+            'EstadoConservacao': material.EstadoConservacao,
+            'LocalizacaoFisica': material.LocalizacaoFisica,
+            'FotoMaterialURI': material.FotoMaterialURI
+        }
+
+        return jsonify(material_json)
+
+    return render_template('get_material.html')
+
+
+@app.route('/get_materiais')
+def get_materiais():
+    materiais = MaterialDidatico.query.all()
+    materiais_json = [{'ID': material.ID, 'Descricao': material.Descricao, 'Categoria': material.Categoria} for material in materiais]
+    return jsonify(materiais_json)
+
+
+@app.route('/materiais_crud')
+def materiais_crud():
+    return render_template('material_crud.html')
 
 # Usuarios ---------------------------------------------------
 
@@ -299,3 +454,4 @@ def get_emprestimo(id):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
