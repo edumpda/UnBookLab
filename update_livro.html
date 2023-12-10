@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atualizar Livro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>Atualizar Livro</h1>
+
+    <form method="POST" action="{{ url_for('update_livro', isbn=livro.ISBN) }}">
+        <!-- Campo ISBN (readonly) -->
+        <label for="isbn">ISBN:</label>
+        <input type="text" id="isbn" name="isbn" value="{{ livro.ISBN }}" readonly><br>
+    
+        <!-- Outros campos do livro -->
+        <label for="titulo">Título:</label>
+        <input type="text" id="titulo" name="titulo" value="{{ livro.Titulo }}"><br>
+    
+        <label for="autor">Autor:</label>
+        <input type="text" id="autor" name="autor" value="{{ livro.Autor }}"><br>
+    
+        <label for="descricao">Descrição:</label>
+        <textarea id="descricao" name="descricao" rows="4">{{ livro.Descricao }}</textarea><br>
+    
+        <label for="categoria">Categoria:</label>
+        <input type="text" id="categoria" name="categoria" value="{{ livro.Categoria }}"><br>
+    
+        <label for="data_aquisicao">Data de Aquisição:</label>
+        <input type="date" id="data_aquisicao" name="data_aquisicao" value="{{ livro.DataAquisicao }}"><br>
+    
+        <label for="estado_conservacao">Estado de Conservação:</label>
+        <input type="text" id="estado_conservacao" name="estado_conservacao" value="{{ livro.EstadoConservacao }}"><br>
+    
+        <label for="localizacao_fisica">Localização Física:</label>
+        <input type="text" id="localizacao_fisica" name="localizacao_fisica" value="{{ livro.LocalizacaoFisica }}"><br>
+    
+        <label for="capa_livro_uri">URL da Capa do Livro:</label>
+        <input type="text" id="capa_livro_uri" name="capa_livro_uri" value="{{ livro.CapaLivroURI }}"><br>
+    
+        <button type="submit">Atualizar Livro</button>
+    </form>
+    
+    
+        <!-- Exibição de mensagens de sucesso ou erro -->
+        <div class="{{ mensagem.classe }}">{{ mensagem.conteudo }}</div>
+    
+        <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    </body>
+    </html>
