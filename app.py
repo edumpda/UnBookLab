@@ -2,11 +2,13 @@ from flask import Flask, jsonify, request, render_template, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from models import db, Livros, MaterialDidatico, Usuario, Emprestimo
 from datetime import datetime
+from sqlalchemy import text
+from sqlalchemy import create_engine
 import json
 
 app = Flask(__name__)
 # COLOQUE A URL DO SEU BANCO NA LINHA 9, AINDA NÃO ESTÁ INTEGRADO
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:lucasql@localhost:3306/biblioteca'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://lucas:password@localhost:3306/Test'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'chave'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
@@ -15,6 +17,10 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_PASSWORD'] = 'password'
 
 db.init_app(app)
+
+engine = create_engine(
+    'mysql://lucas:password@localhost:3306/Test'
+)
 
 
 @app.route('/')
@@ -38,7 +44,8 @@ def add_livro():
         autor = request.form['autor']
         descricao = request.form['descricao']
         categoria = request.form['categoria']
-        data_aquisicao = datetime.strptime(request.form['data_aquisicao'], '%Y-%m-%d').date()
+        data_aquisicao = datetime.strptime(
+            request.form['data_aquisicao'], '%Y-%m-%d').date()
         estado_conservacao = request.form['estado_conservacao']
         localizacao_fisica = request.form['localizacao_fisica']
         capa_livro_uri = request.form['capa_livro_uri']
@@ -57,13 +64,14 @@ def add_livro():
         try:
             db.session.add(livro)
             db.session.commit()
-            mensagem = {'conteudo': 'Livro adicionado com sucesso!', 'classe': 'mensagem-sucesso'}
+            mensagem = {'conteudo': 'Livro adicionado com sucesso!',
+                        'classe': 'mensagem-sucesso'}
         except Exception as e:
             db.session.rollback()
-            mensagem = {'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
+            mensagem = {
+                'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
 
     return render_template('cadastrar_livro.html', mensagem=mensagem)
-
 
 
 @app.route('/update_livro', methods=['GET', 'POST'])
@@ -84,7 +92,8 @@ def update_livro():
         if livro:
             return redirect(url_for('update_livro_form', isbn=isbn_pesquisa))
         else:
-            mensagem = {'conteudo': 'Livro não encontrado.', 'classe': 'mensagem-erro'}
+            mensagem = {'conteudo': 'Livro não encontrado.',
+                        'classe': 'mensagem-erro'}
 
     return render_template('update_livro_pesquisa.html', mensagem=mensagem)
 
@@ -101,23 +110,27 @@ def update_livro_form(isbn):
             livro.Autor = data.get('autor', livro.Autor)
             livro.Descricao = data.get('descricao', livro.Descricao)
             livro.Categoria = data.get('categoria', livro.Categoria)
-            livro.DataAquisicao = datetime.strptime(data.get('data_aquisicao', str(livro.DataAquisicao)), '%Y-%m-%d').date()
-            livro.EstadoConservacao = data.get('estado_conservacao', livro.EstadoConservacao)
-            livro.LocalizacaoFisica = data.get('localizacao_fisica', livro.LocalizacaoFisica)
+            livro.DataAquisicao = datetime.strptime(
+                data.get('data_aquisicao', str(livro.DataAquisicao)), '%Y-%m-%d').date()
+            livro.EstadoConservacao = data.get(
+                'estado_conservacao', livro.EstadoConservacao)
+            livro.LocalizacaoFisica = data.get(
+                'localizacao_fisica', livro.LocalizacaoFisica)
             livro.CapaLivroURI = data.get('capa_livro_uri', livro.CapaLivroURI)
 
             try:
                 db.session.commit()
-                mensagem = {'conteudo': 'Livro atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
+                mensagem = {'conteudo': 'Livro atualizado com sucesso!',
+                            'classe': 'mensagem-sucesso'}
             except Exception as e:
                 db.session.rollback()
-                mensagem = {'conteudo': f'Erro ao atualizar o livro: {str(e)}', 'classe': 'mensagem-erro'}
+                mensagem = {
+                    'conteudo': f'Erro ao atualizar o livro: {str(e)}', 'classe': 'mensagem-erro'}
         else:
-            mensagem = {'conteudo': 'Livro não encontrado para atualização.', 'classe': 'mensagem-erro'}
-    
+            mensagem = {
+                'conteudo': 'Livro não encontrado para atualização.', 'classe': 'mensagem-erro'}
+
     return render_template('update_livro.html', livro=livro, mensagem=mensagem)
-
-
 
 
 @app.route('/delete_livro', methods=['GET', 'POST'])
@@ -133,12 +146,15 @@ def delete_livro():
             try:
                 db.session.delete(livro)
                 db.session.commit()
-                mensagem = {'conteudo': 'Livro excluído com sucesso!', 'classe': 'mensagem-sucesso'}
+                mensagem = {'conteudo': 'Livro excluído com sucesso!',
+                            'classe': 'mensagem-sucesso'}
             except Exception as e:
                 db.session.rollback()
-                mensagem = {'conteudo': f'Erro ao excluir o livro: {str(e)}', 'classe': 'mensagem-erro'}
+                mensagem = {
+                    'conteudo': f'Erro ao excluir o livro: {str(e)}', 'classe': 'mensagem-erro'}
         else:
-            mensagem = {'conteudo': 'Livro não encontrado para exclusão.', 'classe': 'mensagem-erro'}
+            mensagem = {
+                'conteudo': 'Livro não encontrado para exclusão.', 'classe': 'mensagem-erro'}
 
     return render_template('delete_livro.html', livro=livro, mensagem=mensagem)
 
@@ -173,13 +189,17 @@ def get_livro():
     return render_template('get_livro.html')
 
 
-
-
 @app.route('/get_livros')
 def get_livros():
     livros = Livros.query.all()
-    livros_json = [{'ISBN': livro.ISBN, 'Titulo': livro.Titulo, 'Autor': livro.Autor} for livro in livros]
+    sql = text("SELECT ISBN FROM livros")
+    livros_json = [{'ISBN': livro.ISBN, 'Titulo': livro.Titulo,
+                    'Autor': livro.Autor} for livro in livros]
+    data = engine.execute(sql)
+    for row in data:
+        print(row)
     return jsonify(livros_json)
+
 
 @app.route('/livros_crud')
 def livros_crud():
@@ -211,10 +231,12 @@ def add_material():
         try:
             db.session.add(material)
             db.session.commit()
-            mensagem = {'conteudo': 'Material didático adicionado com sucesso!', 'classe': 'mensagem-sucesso'}
+            mensagem = {
+                'conteudo': 'Material didático adicionado com sucesso!', 'classe': 'mensagem-sucesso'}
         except Exception as e:
             db.session.rollback()
-            mensagem = {'conteudo': f'Erro ao adicionar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
+            mensagem = {
+                'conteudo': f'Erro ao adicionar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
 
     return render_template('cadastrar_material.html', mensagem=mensagem)
 
@@ -233,7 +255,8 @@ def update_material():
         if material:
             return redirect(url_for('update_material_form', id=id_pesquisa))
         else:
-            mensagem = {'conteudo': 'Material didático não encontrado.', 'classe': 'mensagem-erro'}
+            mensagem = {
+                'conteudo': 'Material didático não encontrado.', 'classe': 'mensagem-erro'}
 
     return render_template('update_material_pesquisa.html', mensagem=mensagem)
 
@@ -248,20 +271,27 @@ def update_material_form(id):
             data = request.form
             material.Descricao = data.get('descricao', material.Descricao)
             material.Categoria = data.get('categoria', material.Categoria)
-            material.NumeroSerie = data.get('numero_serie', material.NumeroSerie)
-            material.EstadoConservacao = data.get('estado_conservacao', material.EstadoConservacao)
-            material.LocalizacaoFisica = data.get('localizacao_fisica', material.LocalizacaoFisica)
-            material.FotoMaterialURI = data.get('foto_material_uri', material.FotoMaterialURI)
+            material.NumeroSerie = data.get(
+                'numero_serie', material.NumeroSerie)
+            material.EstadoConservacao = data.get(
+                'estado_conservacao', material.EstadoConservacao)
+            material.LocalizacaoFisica = data.get(
+                'localizacao_fisica', material.LocalizacaoFisica)
+            material.FotoMaterialURI = data.get(
+                'foto_material_uri', material.FotoMaterialURI)
 
             try:
                 db.session.commit()
-                mensagem = {'conteudo': 'Material didático atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
+                mensagem = {
+                    'conteudo': 'Material didático atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
             except Exception as e:
                 db.session.rollback()
-                mensagem = {'conteudo': f'Erro ao atualizar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
+                mensagem = {
+                    'conteudo': f'Erro ao atualizar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
         else:
-            mensagem = {'conteudo': 'Material didático não encontrado para atualização.', 'classe': 'mensagem-erro'}
-    
+            mensagem = {
+                'conteudo': 'Material didático não encontrado para atualização.', 'classe': 'mensagem-erro'}
+
     return render_template('update_material.html', material=material, mensagem=mensagem)
 
 
@@ -278,12 +308,15 @@ def delete_material():
             try:
                 db.session.delete(material)
                 db.session.commit()
-                mensagem = {'conteudo': 'Material didático excluído com sucesso!', 'classe': 'mensagem-sucesso'}
+                mensagem = {
+                    'conteudo': 'Material didático excluído com sucesso!', 'classe': 'mensagem-sucesso'}
             except Exception as e:
                 db.session.rollback()
-                mensagem = {'conteudo': f'Erro ao excluir o material didático: {str(e)}', 'classe': 'mensagem-erro'}
+                mensagem = {
+                    'conteudo': f'Erro ao excluir o material didático: {str(e)}', 'classe': 'mensagem-erro'}
         else:
-            mensagem = {'conteudo': 'Material didático não encontrado para exclusão.', 'classe': 'mensagem-erro'}
+            mensagem = {
+                'conteudo': 'Material didático não encontrado para exclusão.', 'classe': 'mensagem-erro'}
 
     return render_template('delete_material.html', material=material, mensagem=mensagem)
 
@@ -319,7 +352,8 @@ def get_material():
 @app.route('/get_materiais')
 def get_materiais():
     materiais = MaterialDidatico.query.all()
-    materiais_json = [{'ID': material.ID, 'Descricao': material.Descricao, 'Categoria': material.Categoria} for material in materiais]
+    materiais_json = [{'ID': material.ID, 'Descricao': material.Descricao,
+                       'Categoria': material.Categoria} for material in materiais]
     return jsonify(materiais_json)
 
 
@@ -395,19 +429,31 @@ def get_usuario(id):
 # Emprestimos ---------------------------------------------
 
 
-@app.route('/add_emprestimo')
+@app.route('/add_emprestimo', methods=['GET', 'POST'])
 def add_emprestimo():
-    emprestimo = Emprestimo(
-        IDUsuario=Usuario.query.first().ID,
-        IDLivro=Livros.query.first().ISBN,
-        IDMaterialDidatico=MaterialDidatico.query.first().ID,
-        DataEmprestimo="2017-01-01",
-        DataDevolucaoPrevista="2017-01-01",
-        Status="dshfjdfshj",
-    )
-    db.session.add(emprestimo)
-    db.session.commit()
-    return 'emprestimo add'
+    mensagem = None
+    if request.method == 'POST':
+        user = request.form['user']
+        livro = request.form['book']
+        material = request.form['material']
+        data_emp = request.form['data_emprestimo']
+        data_dev = request.form['data_devolucao']
+        status = request.form['status']
+        sql = text(
+            """INSERT INTO emprestimo (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista, Status) 
+            VALUES ({user}, {livro}, {material}, '{data_emp}', '{data_dev}', '{status}');""".format(
+                user=user, livro=livro, material=material, data_emp=data_emp, data_dev=data_dev, status=status))
+        print(sql)
+        try:
+            engine.execute(sql)
+            mensagem = {'conteudo': 'Emprestimo adicionado com sucesso!',
+                        'classe': 'mensagem-sucesso'}
+        except Exception as e:
+            db.session.rollback()
+            mensagem = {
+                'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
+
+    return render_template('cadastrar_emprestimo.html', mensagem=mensagem)
 
 
 @app.route('/update_emprestimo/<id>', methods=['PUT'])
@@ -454,4 +500,3 @@ def get_emprestimo(id):
 
 if __name__ == '__main__':
     app.run(debug=True)
-

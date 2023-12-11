@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
+
 class Livros(db.Model):
     ISBN = db.Column(db.String(13), primary_key=True)
     Titulo = db.Column(db.String(255))
@@ -13,8 +14,9 @@ class Livros(db.Model):
     LocalizacaoFisica = db.Column(db.String(255))
     CapaLivroURI = db.Column(db.String(255))
 
+
 class MaterialDidatico(db.Model):
-    __tablename__ = 'materiaisdidaticos'  # Nome da tabeela no seu BD
+    __tablename__ = 'material_didatico'  # Nome da tabeela no seu BD
     ID = db.Column(db.Integer, primary_key=True, autoincrement=True)
     Descricao = db.Column(db.Text)
     Categoria = db.Column(db.String(50))
@@ -23,7 +25,6 @@ class MaterialDidatico(db.Model):
     EstadoConservacao = db.Column(db.String(50))
     LocalizacaoFisica = db.Column(db.String(255))
     FotoMaterialURI = db.Column(db.String(255))
-
 
 
 class Usuario(db.Model):
@@ -35,17 +36,18 @@ class Usuario(db.Model):
     SenhaCriptografada = db.Column(db.String(255))
     FotoUsuarioURI = db.Column(db.String(255))
 
+
 class Emprestimo(db.Model):
     ID = db.Column(db.Integer, primary_key=True, autoincrement=True)
     IDUsuario = db.Column(db.Integer, db.ForeignKey('usuario.ID'))
     IDLivro = db.Column(db.String(13), db.ForeignKey('livros.ISBN'))
-    IDMaterialDidatico = db.Column(db.Integer, db.ForeignKey('materialdidatico.ID'))
+    IDMaterialDidatico = db.Column(
+        db.Integer, db.ForeignKey('material_didatico.ID'))
     DataEmprestimo = db.Column(db.Date)
     DataDevolucaoPrevista = db.Column(db.Date)
     Status = db.Column(db.String(50))
 
     usuario = db.relationship('Usuario', foreign_keys=[IDUsuario])
     livro = db.relationship('Livros', foreign_keys=[IDLivro])
-    material_didatico = db.relationship('MaterialDidatico', foreign_keys=[IDMaterialDidatico], primaryjoin='Emprestimo.IDMaterialDidatico == MaterialDidatico.ID')
-
-
+    material_didatico = db.relationship('MaterialDidatico', foreign_keys=[
+                                        IDMaterialDidatico], primaryjoin='Emprestimo.IDMaterialDidatico == MaterialDidatico.ID')
