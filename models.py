@@ -4,6 +4,7 @@ db = SQLAlchemy()
 
 
 class Livros(db.Model):
+    Livros = 'livros'
     ISBN = db.Column(db.String(13), primary_key=True)
     Titulo = db.Column(db.String(255))
     Autor = db.Column(db.String(255))
@@ -16,7 +17,7 @@ class Livros(db.Model):
 
 
 class MaterialDidatico(db.Model):
-    __tablename__ = 'material_didatico'  # Nome da tabeela no seu BD
+    MaterialDidatico = 'material_didatico'  # Nome da tabeela no seu BD
     ID = db.Column(db.Integer, primary_key=True, autoincrement=True)
     Descricao = db.Column(db.Text)
     Categoria = db.Column(db.String(50))

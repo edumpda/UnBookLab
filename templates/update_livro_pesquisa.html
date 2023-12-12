@@ -96,9 +96,9 @@
 <body>
     <h1>Pesquisar Livro para Atualizar</h1>
 
-    <form method="post" action="{{ url_for('update_livro') }}">
+    <form method="post">
         <label for="isbn_pesquisa">Pesquisar por ISBN:</label>
-        <input type="text" id="isbn_pesquisa" name="isbn_pesquisa">
+        <input type="text"name="isbn_pesquisa" required>
         <button type="submit">Pesquisar Livro</button>
     </form>
 
@@ -111,7 +111,5 @@
     <ul>
         <li><a href="{{ url_for('livros_crud') }}">Voltar ao CRUD de Livros</a></li>
     </ul>
-
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

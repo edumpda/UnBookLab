@@ -79,17 +79,16 @@
 <body>
     <h1>Excluir Livro</h1>
 
-    <form method="post" action="{{ url_for('delete_livro') }}">
+    {% if mensagem %}
+        <div class="{{ mensagem.classe }}">{{ mensagem.conteudo }}</div>
+    {% endif %}
+
+    <form method="post">
         <!-- Campo para inserir ISBN do livro a ser excluído -->
         <label for="isbn">ISBN:</label>
         <input type="text" id="isbn" name="isbn" required>
 
         <button type="submit">Excluir Livro</button>
     </form>
-
-    <!-- Exibição de mensagens de sucesso ou erro -->
-    <div class="message {{ mensagem.classe }}">{{ mensagem.conteudo }}</div>
-
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

@@ -8,7 +8,7 @@ import json
 
 app = Flask(__name__)
 # COLOQUE A URL DO SEU BANCO NA LINHA 9, AINDA NÃO ESTÁ INTEGRADO
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:lucasql@localhost:3306/biblioteca'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:#teste123321@localhost:3306/Biblioteca'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'chave'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
@@ -19,7 +19,7 @@ app.config['SQLALCHEMY_PASSWORD'] = 'password'
 db.init_app(app)
 
 engine = create_engine(
-    'mysql://root:lucasql@localhost:3306/biblioteca'
+    'mysql://root:#teste123321@localhost:3306/Biblioteca'
 )
 
 
@@ -44,35 +44,33 @@ def add_livro():
         autor = request.form['autor']
         descricao = request.form['descricao']
         categoria = request.form['categoria']
-        data_aquisicao = datetime.strptime(
-            request.form['data_aquisicao'], '%Y-%m-%d').date()
+        data_aquisicao = datetime.strptime(request.form['data_aquisicao'], '%Y-%m-%d').date()
         estado_conservacao = request.form['estado_conservacao']
         localizacao_fisica = request.form['localizacao_fisica']
         capa_livro_uri = request.form['capa_livro_uri']
 
-        livro = Livros(
-            ISBN=isbn,
-            Titulo=titulo,
-            Autor=autor,
-            Descricao=descricao,
-            Categoria=categoria,
-            DataAquisicao=data_aquisicao,
-            EstadoConservacao=estado_conservacao,
-            LocalizacaoFisica=localizacao_fisica,
-            CapaLivroURI=capa_livro_uri
-        )
+        sql = text("""INSERT INTO livros (ISBN, Titulo, Autor, Descricao, Categoria, DataAquisicao, EstadoConservacao, LocalizacaoFisica, CapaLivroURI) 
+                      VALUES (:isbn, :titulo, :autor, :descricao, :categoria, :data_aquisicao, :estado_conservacao, :localizacao_fisica, :capa_livro_uri)""")
+
         try:
-            db.session.add(livro)
+            db.session.execute(sql, {
+                'isbn': isbn,
+                'titulo': titulo,
+                'autor': autor,
+                'descricao': descricao,
+                'categoria': categoria,
+                'data_aquisicao': data_aquisicao,
+                'estado_conservacao': estado_conservacao,
+                'localizacao_fisica': localizacao_fisica,
+                'capa_livro_uri': capa_livro_uri
+            })
             db.session.commit()
-            mensagem = {'conteudo': 'Livro adicionado com sucesso!',
-                        'classe': 'mensagem-sucesso'}
+            mensagem = {'conteudo': 'Livro adicionado com sucesso!', 'classe': 'mensagem-sucesso'}
         except Exception as e:
             db.session.rollback()
-            mensagem = {
-                'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
+            mensagem = {'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
 
     return render_template('cadastrar_livro.html', mensagem=mensagem)
-
 
 @app.route('/update_livro', methods=['GET', 'POST'])
 def update_livro():
@@ -81,9 +79,6 @@ def update_livro():
 
     if request.method == 'POST':
         isbn_pesquisa = request.form.get('isbn_pesquisa')
-        app.logger.info(f"Formulário Recebido: {request.form}")
-        print(f"Conteúdo do Formulário: {request.form}")
-        print(f"ISBN Pesquisado: {isbn_pesquisa}")
 
         # Certifique-se de que ISBN não seja None antes de fazer a consulta
         if isbn_pesquisa is not None:
@@ -106,19 +101,31 @@ def update_livro_form(isbn):
     if request.method == 'POST':
         if livro:
             data = request.form
-            livro.Titulo = data.get('titulo', livro.Titulo)
-            livro.Autor = data.get('autor', livro.Autor)
-            livro.Descricao = data.get('descricao', livro.Descricao)
-            livro.Categoria = data.get('categoria', livro.Categoria)
-            livro.DataAquisicao = datetime.strptime(
-                data.get('data_aquisicao', str(livro.DataAquisicao)), '%Y-%m-%d').date()
-            livro.EstadoConservacao = data.get(
-                'estado_conservacao', livro.EstadoConservacao)
-            livro.LocalizacaoFisica = data.get(
-                'localizacao_fisica', livro.LocalizacaoFisica)
-            livro.CapaLivroURI = data.get('capa_livro_uri', livro.CapaLivroURI)
+            sql = text("""
+                UPDATE livros
+                SET Titulo = :titulo,
+                    Autor = :autor,
+                    Descricao = :descricao,
+                    Categoria = :categoria,
+                    DataAquisicao = :data_aquisicao,
+                    EstadoConservacao = :estado_conservacao,
+                    LocalizacaoFisica = :localizacao_fisica,
+                    CapaLivroURI = :capa_livro_uri
+                WHERE ISBN = :isbn
+            """)
 
             try:
+                db.session.execute(sql, {
+                    'titulo': data.get('titulo', livro.Titulo),
+                    'autor': data.get('autor', livro.Autor),
+                    'descricao': data.get('descricao', livro.Descricao),
+                    'categoria': data.get('categoria', livro.Categoria),
+                    'data_aquisicao': datetime.strptime(data.get('data_aquisicao', str(livro.DataAquisicao)), '%Y-%m-%d').date(),
+                    'estado_conservacao': data.get('estado_conservacao', livro.EstadoConservacao),
+                    'localizacao_fisica': data.get('localizacao_fisica', livro.LocalizacaoFisica),
+                    'capa_livro_uri': data.get('capa_livro_uri', livro.CapaLivroURI),
+                    'isbn': isbn
+                    })
                 db.session.commit()
                 mensagem = {'conteudo': 'Livro atualizado com sucesso!',
                             'classe': 'mensagem-sucesso'}
@@ -143,8 +150,10 @@ def delete_livro():
         livro = Livros.query.get(isbn)
 
         if livro:
+            sql = text("DELETE FROM livros WHERE ISBN = :isbn")
+
             try:
-                db.session.delete(livro)
+                db.session.execute(sql, {'isbn': isbn})
                 db.session.commit()
                 mensagem = {'conteudo': 'Livro excluído com sucesso!',
                             'classe': 'mensagem-sucesso'}
@@ -167,7 +176,11 @@ def get_livro():
         if not isbn:
             return jsonify({'error': 'ISBN não fornecido'}), 400
 
-        livro = Livros.query.get(isbn)
+        sql = text(
+            """SELECT * FROM livros WHERE ISBN = :isbn"""
+        )
+
+        livro = db.session.execute(sql, {'isbn': isbn}).fetchone()
 
         if livro is None:
             return jsonify({'error': 'Livro não encontrado'}), 404
@@ -191,13 +204,15 @@ def get_livro():
 
 @app.route('/get_livros')
 def get_livros():
-    livros = Livros.query.all()
-    sql = text("SELECT ISBN FROM livros")
+    sql = text(
+        """SELECT ISBN, Titulo, Autor FROM livros"""
+    )
+
+    livros = db.session.execute(sql).fetchall()
+
     livros_json = [{'ISBN': livro.ISBN, 'Titulo': livro.Titulo,
                     'Autor': livro.Autor} for livro in livros]
-    data = engine.execute(sql)
-    for row in data:
-        print(row)
+    
     return jsonify(livros_json)
 
 
