@@ -8,7 +8,7 @@ import json
 
 app = Flask(__name__)
 # COLOQUE A URL DO SEU BANCO NA LINHA 9, AINDA NÃO ESTÁ INTEGRADO
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://lucas:password@localhost:3306/Test'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:lucasql@localhost:3306/biblioteca'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'chave'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
@@ -19,7 +19,7 @@ app.config['SQLALCHEMY_PASSWORD'] = 'password'
 db.init_app(app)
 
 engine = create_engine(
-    'mysql://lucas:password@localhost:3306/Test'
+    'mysql://root:lucasql@localhost:3306/biblioteca'
 )
 
 
@@ -219,24 +219,21 @@ def add_material():
         estado_conservacao = request.form['estado_conservacao']
         localizacao_fisica = request.form['localizacao_fisica']
         foto_material_uri = request.form['foto_material_uri']
+      # trocar nome da tabela aqui no insert
+        sql = text(
+            """INSERT INTO materiaisdidaticos (Descricao, Categoria, NumeroSerie, EstadoConservacao, LocalizacaoFisica, FotoMaterialURI) 
+            VALUES ('{descricao}', '{categoria}', '{numero_serie}', '{estado_conservacao}', '{localizacao_fisica}', '{foto_material_uri}');""".format(
+                descricao=descricao, categoria=categoria, numero_serie=numero_serie,
+                estado_conservacao=estado_conservacao, localizacao_fisica=localizacao_fisica, foto_material_uri=foto_material_uri))
+        print(sql)
 
-        material = MaterialDidatico(
-            Descricao=descricao,
-            Categoria=categoria,
-            NumeroSerie=numero_serie,
-            EstadoConservacao=estado_conservacao,
-            LocalizacaoFisica=localizacao_fisica,
-            FotoMaterialURI=foto_material_uri
-        )
         try:
-            db.session.add(material)
+            db.session.execute(sql)
             db.session.commit()
-            mensagem = {
-                'conteudo': 'Material didático adicionado com sucesso!', 'classe': 'mensagem-sucesso'}
+            mensagem = {'conteudo': 'Material didático adicionado com sucesso!', 'classe': 'mensagem-sucesso'}
         except Exception as e:
             db.session.rollback()
-            mensagem = {
-                'conteudo': f'Erro ao adicionar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
+            mensagem = {'conteudo': f'Erro ao adicionar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
 
     return render_template('cadastrar_material.html', mensagem=mensagem)
 
@@ -255,11 +252,9 @@ def update_material():
         if material:
             return redirect(url_for('update_material_form', id=id_pesquisa))
         else:
-            mensagem = {
-                'conteudo': 'Material didático não encontrado.', 'classe': 'mensagem-erro'}
+            mensagem = {'conteudo': 'Material didático não encontrado.', 'classe': 'mensagem-erro'}
 
     return render_template('update_material_pesquisa.html', mensagem=mensagem)
-
 
 @app.route('/update_material/<id>', methods=['GET', 'POST'])
 def update_material_form(id):
@@ -269,30 +264,37 @@ def update_material_form(id):
     if request.method == 'POST':
         if material:
             data = request.form
-            material.Descricao = data.get('descricao', material.Descricao)
-            material.Categoria = data.get('categoria', material.Categoria)
-            material.NumeroSerie = data.get(
-                'numero_serie', material.NumeroSerie)
-            material.EstadoConservacao = data.get(
-                'estado_conservacao', material.EstadoConservacao)
-            material.LocalizacaoFisica = data.get(
-                'localizacao_fisica', material.LocalizacaoFisica)
-            material.FotoMaterialURI = data.get(
-                'foto_material_uri', material.FotoMaterialURI)
+            sql = text("""
+                UPDATE materiaisdidaticos
+                SET Descricao = :descricao,
+                    Categoria = :categoria,
+                    NumeroSerie = :numero_serie,
+                    EstadoConservacao = :estado_conservacao,
+                    LocalizacaoFisica = :localizacao_fisica,
+                    FotoMaterialURI = :foto_material_uri
+                WHERE ID = :id
+            """)
 
             try:
+                db.session.execute(sql, {
+                    'descricao': data.get('descricao', material.Descricao),
+                    'categoria': data.get('categoria', material.Categoria),
+                    'numero_serie': data.get('numero_serie', material.NumeroSerie),
+                    'estado_conservacao': data.get('estado_conservacao', material.EstadoConservacao),
+                    'localizacao_fisica': data.get('localizacao_fisica', material.LocalizacaoFisica),
+                    'foto_material_uri': data.get('foto_material_uri', material.FotoMaterialURI),
+                    'id': id
+                })
                 db.session.commit()
-                mensagem = {
-                    'conteudo': 'Material didático atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
+                mensagem = {'conteudo': 'Material didático atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
             except Exception as e:
                 db.session.rollback()
-                mensagem = {
-                    'conteudo': f'Erro ao atualizar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
+                mensagem = {'conteudo': f'Erro ao atualizar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
         else:
-            mensagem = {
-                'conteudo': 'Material didático não encontrado para atualização.', 'classe': 'mensagem-erro'}
+            mensagem = {'conteudo': 'Material didático não encontrado para atualização.', 'classe': 'mensagem-erro'}
 
     return render_template('update_material.html', material=material, mensagem=mensagem)
+
 
 
 @app.route('/delete_material', methods=['GET', 'POST'])
@@ -305,8 +307,10 @@ def delete_material():
         material = MaterialDidatico.query.get(id)
 
         if material:
+            sql = text("DELETE FROM materiaisdidaticos WHERE ID = :id")
+
             try:
-                db.session.delete(material)
+                db.session.execute(sql, {'id': id})
                 db.session.commit()
                 mensagem = {
                     'conteudo': 'Material didático excluído com sucesso!', 'classe': 'mensagem-sucesso'}
@@ -329,7 +333,11 @@ def get_material():
         if not id:
             return jsonify({'error': 'ID não fornecido'}), 400
 
-        material = MaterialDidatico.query.get(id)
+        sql = text(
+            """SELECT * FROM materiaisdidaticos WHERE ID = :id"""
+        )
+
+        material = db.session.execute(sql, {'id': id}).fetchone()
 
         if material is None:
             return jsonify({'error': 'Material didático não encontrado'}), 404
@@ -351,11 +359,15 @@ def get_material():
 
 @app.route('/get_materiais')
 def get_materiais():
-    materiais = MaterialDidatico.query.all()
+    sql = text(
+        """SELECT ID, Descricao, Categoria FROM materiaisdidaticos"""
+    )
+
+    materiais = db.session.execute(sql).fetchall()
+
     materiais_json = [{'ID': material.ID, 'Descricao': material.Descricao,
                        'Categoria': material.Categoria} for material in materiais]
     return jsonify(materiais_json)
-
 
 @app.route('/materiais_crud')
 def materiais_crud():
