@@ -1,14 +1,13 @@
 from flask import Flask, jsonify, request, render_template, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
-from models import db, Livros, MaterialDidatico, Usuario, Emprestimo
 from datetime import datetime
 from sqlalchemy import text
 from sqlalchemy import create_engine
 import json
 
 app = Flask(__name__)
-# COLOQUE A URL DO SEU BANCO NA LINHA 9, AINDA NÃO ESTÁ INTEGRADO
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:#teste123321@localhost:3306/Biblioteca'
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://unbooklab_admin:senha@localhost:3306/Biblioteca'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'chave'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
@@ -16,10 +15,12 @@ app.config['SQLALCHEMY_ECHO'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_PASSWORD'] = 'password'
 
+db = SQLAlchemy()
+
 db.init_app(app)
 
 engine = create_engine(
-    'mysql://root:#teste123321@localhost:3306/Biblioteca'
+    'mysql://unbooklab_admin:senha@localhost:3306/Biblioteca'
 )
 
 
@@ -28,10 +29,10 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/create_db')
-def create_db():
-    db.create_all()
-    return 'Banco de dados criado'
+#@app.route('/create_db')
+#def create_db():
+#    db.create_all()
+#    return 'Banco de dados criado'
 
 
 @app.route('/add_livro', methods=['GET', 'POST'])
@@ -82,7 +83,7 @@ def update_livro():
 
         # Certifique-se de que ISBN não seja None antes de fazer a consulta
         if isbn_pesquisa is not None:
-            livro = Livros.query.get(isbn_pesquisa)
+            livro = db.session.execute(text("SELECT * FROM livros WHERE ISBN = :isbn"), {'isbn': isbn_pesquisa}).fetchone()
 
         if livro:
             return redirect(url_for('update_livro_form', isbn=isbn_pesquisa))
@@ -95,7 +96,7 @@ def update_livro():
 
 @app.route('/update_livro/<isbn>', methods=['GET', 'POST'])
 def update_livro_form(isbn):
-    livro = Livros.query.get(isbn)
+    livro = db.session.execute(text("SELECT * FROM livros WHERE ISBN = :isbn"), {'isbn': isbn}).fetchone()
     mensagem = None
 
     if request.method == 'POST':
@@ -147,7 +148,7 @@ def delete_livro():
 
     if request.method == 'POST':
         isbn = request.form.get('isbn')
-        livro = Livros.query.get(isbn)
+        livro = db.session.execute(text("SELECT * FROM livros WHERE ISBN = :isbn"), {'isbn': isbn}).fetchone()
 
         if livro:
             sql = text("DELETE FROM livros WHERE ISBN = :isbn")
@@ -234,7 +235,7 @@ def add_material():
         estado_conservacao = request.form['estado_conservacao']
         localizacao_fisica = request.form['localizacao_fisica']
         foto_material_uri = request.form['foto_material_uri']
-      # trocar nome da tabela aqui no insert
+ 
         sql = text(
             """INSERT INTO materiaisdidaticos (Descricao, Categoria, NumeroSerie, EstadoConservacao, LocalizacaoFisica, FotoMaterialURI) 
             VALUES ('{descricao}', '{categoria}', '{numero_serie}', '{estado_conservacao}', '{localizacao_fisica}', '{foto_material_uri}');""".format(
@@ -262,7 +263,7 @@ def update_material():
         id_pesquisa = request.form.get('id_pesquisa')
         # Certifique-se de que ID não seja None antes de fazer a consulta
         if id_pesquisa is not None:
-            material = MaterialDidatico.query.get(id_pesquisa)
+            material = db.session.execute(text("SELECT * FROM materiaisdidaticos WHERE ID = :id"), {'id': id_pesquisa}).fetchone()
 
         if material:
             return redirect(url_for('update_material_form', id=id_pesquisa))
@@ -273,7 +274,7 @@ def update_material():
 
 @app.route('/update_material/<id>', methods=['GET', 'POST'])
 def update_material_form(id):
-    material = MaterialDidatico.query.get(id)
+    material = db.session.execute(text("SELECT * FROM materiaisdidaticos WHERE ID = :id"), {'id': id}).fetchone()
     mensagem = None
 
     if request.method == 'POST':
@@ -319,7 +320,7 @@ def delete_material():
 
     if request.method == 'POST':
         id = request.form.get('id')
-        material = MaterialDidatico.query.get(id)
+        material = db.session.execute(text("SELECT * FROM materiaisdidaticos WHERE ID = :id"), {'id': id}).fetchone()
 
         if material:
             sql = text("DELETE FROM materiaisdidaticos WHERE ID = :id")
@@ -393,65 +394,94 @@ def materiais_crud():
 
 @app.route('/add_usuario')
 def add_usuario():
-    user = Usuario(
-        Nome='name',
-        Sobrenome='last name',
-        Funcao='function',
-        Login='login',
-        SenhaCriptografada='password',
-        FotoUsuarioURI='photo'
-    )
-    db.session.add(user)
-    db.session.commit()
-    return 'user add'
+    try:
+        db.session.execute(text("""
+            INSERT INTO usuarios (Nome, Sobrenome, Funcao, Login, SenhaCriptografada, FotoUsuarioURI)
+            VALUES (:nome, :sobrenome, :funcao, :login, :senha, :foto)
+        """), {
+            'nome': 'name',
+            'sobrenome': 'last name',
+            'funcao': 'function',
+            'login': 'login',
+            'senha': 'password',
+            'foto': 'photo'
+        })
+        db.session.commit()
+        return 'Usuário adicionado com sucesso!'
+    except Exception as e:
+        db.session.rollback()
+        return f'Erro ao adicionar usuário: {str(e)}'
+
 
 
 @app.route('/update_usuario/<id>', methods=['PUT'])
 def update_usuario(id):
-    user = Usuario.query.get(id)
-    if user is None:
-        return jsonify({'error': 'Usuario não encontrado'}), 404
+    user_existente = db.session.execute(text("SELECT * FROM usuarios WHERE ID = :id"), {'id': id}).fetchone()
 
-    data = request.json
-    user.Nome = data.get('Nome', user.Nome)
-    user.Sobrenome = data.get('Sobrenome', user.Sobrenome)
-    user.Funcao = data.get('Funcao', user.Funcao)
-    user.Login = data.get('Login', user.Login)
-    user.SenhaCriptografada = data.get(
-        'SenhaCriptografada', user.SenhaCriptografada)
-    user.FotoUsuarioURI = data.get('FotoUsuarioURI', user.FotoUsuarioURI)
-
-    db.session.commit()
-    return jsonify({'message': 'Usuario atualizado com sucesso'}), 200
+    if user_existente:
+        data = request.json
+        try:
+            db.session.execute(text("""
+                UPDATE usuarios
+                SET Nome = :nome,
+                    Sobrenome = :sobrenome,
+                    Funcao = :funcao,
+                    Login = :login,
+                    SenhaCriptografada = :senha,
+                    FotoUsuarioURI = :foto
+                WHERE ID = :id
+            """), {
+                'nome': data.get('Nome', user_existente.Nome),
+                'sobrenome': data.get('Sobrenome', user_existente.Sobrenome),
+                'funcao': data.get('Funcao', user_existente.Funcao),
+                'login': data.get('Login', user_existente.Login),
+                'senha': data.get('SenhaCriptografada', user_existente.SenhaCriptografada),
+                'foto': data.get('FotoUsuarioURI', user_existente.FotoUsuarioURI),
+                'id': id
+            })
+            db.session.commit()
+            return jsonify({'message': 'Usuário atualizado com sucesso'}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 500
+    else:
+        return jsonify({'error': 'Usuário não encontrado'}), 404
 
 
 @app.route('/delete_usuario/<id>', methods=['DELETE'])
 def delete_usuario(id):
-    user = Usuario.query.get(id)
-    if user is None:
-        return jsonify({'error': 'Usuario não encontrado'}), 404
+    user_existente = db.session.execute(text("SELECT * FROM usuarios WHERE ID = :id"), {'id': id}).fetchone()
 
-    db.session.delete(user)
-    db.session.commit()
-    return jsonify({'message': 'Usuario excluído com sucesso'}), 200
+    if user_existente:
+        try:
+            db.session.execute(text("DELETE FROM usuarios WHERE ID = :id"), {'id': id})
+            db.session.commit()
+            return jsonify({'message': 'Usuário excluído com sucesso'}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 500
+    else:
+        return jsonify({'error': 'Usuário não encontrado'}), 404
+
 
 
 @app.route('/get_usuario/<id>')
 def get_usuario(id):
-    user = Usuario.query.get(id)
-    if user is None:
-        return jsonify({'error': 'Material não encontrado'}), 404
+    user = db.session.execute(text("SELECT * FROM usuarios WHERE ID = :id"), {'id': id}).fetchone()
 
-    user_json = {
-        'Nome': user.Nome,
-        'Sobrenome': user.Sobrenome,
-        'Funcao': user.Funcao,
-        'Login': user.Login,
-        'SenhaCriptografada': user.SenhaCriptografada,
-        'user.FotoUsuarioURI': user.FotoUsuarioURI
-    }
+    if user:
+        user_json = {
+            'Nome': user.Nome,
+            'Sobrenome': user.Sobrenome,
+            'Funcao': user.Funcao,
+            'Login': user.Login,
+            'SenhaCriptografada': user.SenhaCriptografada,
+            'FotoUsuarioURI': user.FotoUsuarioURI
+        }
+        return jsonify(user_json)
+    else:
+        return jsonify({'error': 'Usuário não encontrado'}), 404
 
-    return jsonify(user_json)
 
 # Emprestimos ---------------------------------------------
 
@@ -485,7 +515,7 @@ def add_emprestimo():
 
 @app.route('/update_emprestimo/<id>', methods=['PUT'])
 def update_emprestimo(id):
-    emprestimo = Emprestimo.query.get(id)
+    emprestimo = db.session.execute(text("SELECT * FROM emprestimos WHERE ID = :id"), {'id': id}).fetchone()
     if emprestimo is None:
         return jsonify({'error': 'Emprestimo não encontrado'}), 404
 
@@ -501,7 +531,7 @@ def update_emprestimo(id):
 
 @app.route('/delete_emprestimo/<id>', methods=['DELETE'])
 def delete_emprestimo(id):
-    emprestimo = Emprestimo.query.get(id)
+    emprestimo = db.session.execute(text("SELECT * FROM emprestimos WHERE ID = :id"), {'id': id}).fetchone()
     if emprestimo is None:
         return jsonify({'error': 'Emprestimo não encontrado'}), 404
 
@@ -512,7 +542,7 @@ def delete_emprestimo(id):
 
 @app.route('/get_emprestimo/<id>')
 def get_emprestimo(id):
-    emprestimo = Emprestimo.query.get(id)
+    emprestimo = db.session.execute(text("SELECT * FROM emprestimos WHERE ID = :id"), {'id': id}).fetchone()
     if emprestimo is None:
         return jsonify({'error': 'Material não encontrado'}), 404
 

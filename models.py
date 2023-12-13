@@ -1,4 +1,4 @@
-from flask_sqlalchemy import SQLAlchemy
+'''from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
@@ -52,3 +52,4 @@ class Emprestimo(db.Model):
     livro = db.relationship('Livros', foreign_keys=[IDLivro])
     material_didatico = db.relationship('MaterialDidatico', foreign_keys=[
                                         IDMaterialDidatico], primaryjoin='Emprestimo.IDMaterialDidatico == MaterialDidatico.ID')
+'''
