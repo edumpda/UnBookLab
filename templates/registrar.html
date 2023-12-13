@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar - UnBookLab</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #fff;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        .home-container {
+            text-align: center;
+            background-color: #fff;
+            color: #000;
+            padding: 50px;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+        input, select, button {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            width: calc(100% - 22px);
+        }
+        button {
+            background-color: #2f5396;
+            color: #fff;
+            cursor: pointer;
+        }
+        a {
+            color: #2f5396;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="home-container">
+        <h1>Registrar</h1>
+        <form action="/add_usuario" method="post">
+            <input type="text" name="nome" placeholder="Nome" required><br>
+            <input type="text" name="sobrenome" placeholder="Sobrenome" required><br>
+            <input type="email" name="email" placeholder="Email" required><br>
+            <input type="password" name="senha" placeholder="Senha" required><br>
+            <select name="tipo">
+                <option value="administrador">Administrador</option>
+                <option value="aluno">Aluno</option>
+                <option value="membro_lab">Membro do Laboratório</option>
+            </select><br>
+            <input type="text" name="foto" placeholder="URL da Foto do Usuário"><br> <!-- Campo da Foto -->
+            <button type="submit">Registrar</button>
+        </form>
+        <p>Já tem uma conta? <a href="/login">Login</a></p>
+    </div>
+</body>
+</html>

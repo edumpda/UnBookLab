@@ -23,17 +23,43 @@ engine = create_engine(
     'mysql://unbooklab_admin:senha@localhost:3306/Biblioteca'
 )
 
+#################################### HOME LOGIN #########################################################
+'''
+@app.route('/')
+def home():
+    return render_template('home.html')
 
+@app.route('/login')
+def login():
+    return render_template('login.html')
+
+@app.route('/perform_login', methods=['POST'])
+def perform_login():
+    login = request.form.get('login')
+    senha = request.form.get('senha')
+
+    print("Login:", login) 
+    print("Senha:", senha)
+    user = db.session.execute(text("SELECT * FROM usuarios WHERE Login = :login AND SenhaCriptografada = :senha"), {'login': login, 'senha': senha}).fetchone()
+
+    if user:
+        return redirect(url_for('index'))
+
+    else:
+        return render_template('login.html', error="Login ou senha incorretos")
+
+@app.route('/registrar')
+def registrar():
+    return render_template('registrar.html')
+
+@app.route('/index')
+def index():
+    return render_template('index.html')
+'''
+######################################################################################################
 @app.route('/')
 def index():
     return render_template('index.html')
-
-
-#@app.route('/create_db')
-#def create_db():
-#    db.create_all()
-#    return 'Banco de dados criado'
-
 
 @app.route('/add_livro', methods=['GET', 'POST'])
 def add_livro():
@@ -392,7 +418,7 @@ def materiais_crud():
 # Usuarios ---------------------------------------------------
 
 
-@app.route('/add_usuario')
+@app.route('/add_usuario', methods=['POST'])
 def add_usuario():
     try:
         db.session.execute(text("""
