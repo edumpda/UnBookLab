@@ -74,7 +74,7 @@
     </style>
 </head>
 <body>
-    <h1>Cadastrar Emprestimo</h1>
+    <h1>Atualizar Emprestimo</h1>
 
     {% if mensagem %}
         <div class="message {{ mensagem['classe'] }}">
@@ -82,23 +82,17 @@
         </div>
     {% endif %}
 
-    <form method="post" action="{{ url_for('add_emprestimo') }}">
-        <label for="user">Usuario:</label>
-        <input type="text" id="user" name="user" required>
-
-        <label for="book">Livro:</label>
-        <input type="text" id="book" name="book" required>
-
-        <label for="material">Material:</label>
-        <input type="text" id="material" name="material" required>
-
+    <form method="post" action="{{ url_for('update_emprestimo_form', id=emprestimo[0]) }}">
         <label for="data_emprestimo">Data inicial:</label>
-        <input type="date" id="data_emprestimo" name="data_emprestimo" rows="4" required></input>
+        <input type="date" id="data_emprestimo" name="data_emprestimo" rows="4" value="{{ emprestimo[5]}}" required></input>
 
         <label for="data_devolucao">data devolução:</label>
-        <input type="date" id="data_devolucao" name="data_devolucao" required>
+        <input type="date" id="data_devolucao" name="data_devolucao" value="{{ emprestimo[6]}}" required>
 
-        <button type="submit">Cadastrar Emprestimo</button>
+        <label for="status">Status</label>
+        <textarea type="text" id="status" name="status" value="{{ emprestimo[7]}}" required></textarea>
+
+        <button type="submit">Atualizar Emprestimo</button>
     </form>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
