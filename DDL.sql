@@ -1,5 +1,4 @@
 CREATE DATABASE IF NOT EXISTS Biblioteca;
-GRANT ALL PRIVILEGES ON Biblioteca TO 'unbooklab_admin'@'localhost';
 GRANT ALL PRIVILEGES ON Biblioteca.* TO 'unbooklab_admin'@'localhost';
 USE Biblioteca;
 
