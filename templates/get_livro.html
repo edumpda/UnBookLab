@@ -69,6 +69,16 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: left;
         }
+        .button-voltar {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    background-color: #333;
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin-top: 20px;
+}
     </style>
 </head>
 <body>
@@ -83,5 +93,6 @@
     <div id="livro_info"></div>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <a class="button-voltar" href="{{ url_for('livros_crud') }}">Voltar para CRUD Livros</a>
 </body>
 </html>

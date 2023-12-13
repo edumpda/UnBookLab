@@ -71,6 +71,40 @@
             background-color: #f44336;
             color: #fff;
         }
+        .button-voltar {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    background-color: #333;
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin-top: 20px;
+}
+
+.button-voltar:hover {
+    background-color: #555;
+}
+
+.button-voltar:hover {
+    background-color: #555;
+}
+
+
+.button-voltar:hover {
+    background-color: #555;
+}
+
+
+.button-voltar:hover {
+    background-color: #555;
+}
+
+
+.button-voltar:hover {
+    background-color: #868080;
+}
+
     </style>
 </head>
 <body>
@@ -114,5 +148,9 @@
     </form>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <!-- Adiciona um botão para voltar à tela de CRUD de livros -->
+    <a class="button-voltar" href="{{ url_for('livros_crud') }}">Voltar para CRUD Livros</a>
+
+
 </body>
 </html>

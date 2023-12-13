@@ -74,6 +74,16 @@
         .error {
             background-color: #f44336;
         }
+        .button-voltar {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    background-color: #333;
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin-top: 20px;
+}
     </style>
 </head>
 <body>
@@ -89,6 +99,8 @@
         <input type="text" id="isbn" name="isbn" required>
 
         <button type="submit">Excluir Livro</button>
+        <a class="button-voltar" href="{{ url_for('livros_crud') }}">Voltar para CRUD Livros</a>
+
     </form>
 </body>
 </html>
