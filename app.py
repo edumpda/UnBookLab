@@ -444,21 +444,25 @@ def add_emprestimo():
             """SELECT ID FROM usuario WHERE usuario.Nome = '{name}'""".format(name=name))
         sql_book = text(
             """SELECT ISBN FROM livros WHERE livros.ISBN = '{isbn}'""".format(isbn=isbn))
-        id_user = engine.execute(sql_user).first()[0]
-        id_book = engine.execute(sql_book).first()[0]
-        sql = text(
-            """INSERT INTO emprestimo (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista) 
+        id_user = engine.execute(sql_user)
+        id_book = engine.execute(sql_book)
+        user_tuple = id_user.first()
+        book_tuple = id_book.first()
+        if user_tuple and book_tuple is not None:
+            sql = text(
+                """INSERT INTO emprestimo (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista) 
             VALUES ({user}, {livro}, {material}, '{data_emp}', '{data_dev}');""".format(
-                user=id_user, livro=id_book, material=material, data_emp=data_emp, data_dev=data_dev))
-
-        try:
-            engine.execute(sql)
-            mensagem = {'conteudo': 'Emprestimo adicionado com sucesso!',
-                        'classe': 'mensagem-sucesso'}
-        except Exception as e:
-            db.session.rollback()
+                    user=user_tuple[0], livro=book_tuple[0], material=material, data_emp=data_emp, data_dev=data_dev))
+            try:
+                engine.execute(sql)
+                mensagem = {'conteudo': 'Emprestimo adicionado com sucesso!',
+                            'classe': 'mensagem-sucesso'}
+            except Exception as e:
+                mensagem = {
+                    'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
+        else:
             mensagem = {
-                'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
+                'conteudo': f'Erro ao adicionar o livro', 'classe': 'mensagem-erro'}
 
     return render_template('cadastrar_emprestimo.html', mensagem=mensagem)
 
@@ -476,17 +480,21 @@ def update_emprestimo():
             """SELECT ID FROM usuario WHERE usuario.Nome = '{name}'""".format(name=name))
         sql_book = text(
             """SELECT ISBN FROM livros WHERE livros.ISBN = '{isbn}'""".format(isbn=isbn))
-        id_user = engine.execute(sql_user).first()[0]
-        id_book = engine.execute(sql_book).first()[0]
-
-        if name is not None:
+        id_user = engine.execute(sql_user)
+        id_book = engine.execute(sql_book)
+        user_tuple = id_user.first()
+        book_tuple = id_book.first()
+        if user_tuple and book_tuple is not None:
             sql = text(
-                """SELECT * FROM emprestimo AS E WHERE E.IDUsuario = {id_user} AND E.IDLivro = {id_book} """.format(id_user=id_user, id_book=id_book))
+                """SELECT * FROM emprestimo AS E WHERE E.IDUsuario = {id_user} AND E.IDLivro = {id_book} """.format(id_user=user_tuple[0], id_book=book_tuple[0]))
             emprestimo = engine.execute(sql).first()
             print(emprestimo)
 
-        if emprestimo:
-            return redirect(url_for('update_emprestimo_form', id=emprestimo[0]))
+            if emprestimo:
+                return redirect(url_for('update_emprestimo_form', id=emprestimo[0]))
+            else:
+                mensagem = {'conteudo': 'emprestimo não encontrado.',
+                            'classe': 'mensagem-erro'}
         else:
             mensagem = {'conteudo': 'emprestimo não encontrado.',
                         'classe': 'mensagem-erro'}
@@ -578,16 +586,19 @@ def get_emprestimo():
             """SELECT ID FROM usuario WHERE usuario.Nome = '{name}'""".format(name=name))
         sql_book = text(
             """SELECT ISBN FROM livros WHERE livros.ISBN = '{isbn}'""".format(isbn=isbn))
-        id_user = engine.execute(sql_user).first()[0]
-        id_book = engine.execute(sql_book).first()[0]
+        id_user = engine.execute(sql_user)
+        id_book = engine.execute(sql_book)
 
-        if name and isbn is not None:
+        if id_user and id_book.first is not None:
             sql = text(
-                """SELECT * FROM emprestimo AS E WHERE E.IDUsuario = {id_user} AND E.IDLivro = {id_book} """.format(id_user=id_user, id_book=id_book))
+                """SELECT * FROM emprestimo AS E WHERE E.IDUsuario = {id_user} AND E.IDLivro = {id_book} """.format(id_user=id_user.first()[0], id_book=id_book.first()[0]))
             emprestimo = engine.execute(sql).first()
 
-        if emprestimo:
-            return emprestimo_module.initialize(emprestimo)
+            if emprestimo:
+                return emprestimo_module.initialize(emprestimo)
+            else:
+                mensagem = {'conteudo': 'emprestimo não encontrado.',
+                            'classe': 'mensagem-erro'}
         else:
             mensagem = {'conteudo': 'emprestimo não encontrado.',
                         'classe': 'mensagem-erro'}
