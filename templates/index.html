@@ -40,13 +40,31 @@
             margin-top: 20px;
             color: #777;
         }
+
+        .login-button {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            text-decoration: none;
+            color: #fff;
+            background-color: #3498db;
+            padding: 10px 15px;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        .login-button:hover {
+            background-color: #258cd1;
+        }
     </style>
 </head>
 <body>
+    <a class="login-button" href="{{ url_for('login') }}">Login</a>
     <h1>Biblioteca</h1>
     <a href="{{ url_for('livros_crud') }}">Gerenciar Livros</a>
     <a href="{{ url_for('materiais_crud') }}">Gerenciar Materiais Didáticos</a>
-    <a href="{{ url_for('emprestimos_crud') }}">Gerenciarar Emprestimos</a>
+    <a href="{{ url_for('emprestimos_crud') }}">Gerenciar Emprestimos</a>
+    <a href="{{ url_for('get_usuarios') }}">Users</a>
     <p>Seja bem-vindo à biblioteca virtual!</p>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>

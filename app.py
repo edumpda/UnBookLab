@@ -4,11 +4,12 @@ from datetime import datetime
 from sqlalchemy import text
 from sqlalchemy import create_engine
 import emprestimo_module
-import json
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://lucas:password@localhost:3306/Biblioteca'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:#teste123321@localhost:3306/Biblioteca'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'chave'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
@@ -20,8 +21,40 @@ db = SQLAlchemy()
 
 db.init_app(app)
 
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    user_data = db.session.execute(text("SELECT * FROM usuarios WHERE ID = :user_id"), {'user_id': user_id}).fetchone()
+    if user_data:
+        return User(user_data.ID)
+    return None
+
+class User(UserMixin):
+    def __init__(self, user_id, login=None, sobrenome=None, funcao=None, foto_usuario_uri=None):
+        self.id = user_id
+        self.login = login
+        self.sobrenome = sobrenome
+        self.funcao = funcao
+        self.foto_usuario_uri = foto_usuario_uri
+
+    @staticmethod
+    def get(user_id):
+        user_data = db.session.execute(text("SELECT * FROM Usuarios WHERE ID = :user_id"), {'user_id': user_id}).fetchone()
+        if user_data:
+            return User(
+                user_data.ID,
+                user_data.Nome,
+                user_data.Sobrenome,
+                user_data.Funcao,
+                user_data.Login,
+                user_data.FotoUsuarioURI
+            )
+        return None
+
 engine = create_engine(
-    'mysql://lucas:password@localhost:3306/Biblioteca'
+    'mysql://root:#teste123321@localhost:3306/Biblioteca'
 )
 
 #################################### HOME LOGIN #########################################################
@@ -64,45 +97,79 @@ def index():
 def index():
     return render_template('index.html')
 
+@app.route('/login')
+def login():
+    return render_template('login.html')
+
+@app.route('/perform_login', methods=['POST'])
+def perform_login():
+    login = request.form.get('login')
+    senha = request.form.get('senha')
+
+    user_data = db.session.execute(text("SELECT * FROM usuarios WHERE Login = :login AND SenhaCriptografada = :senha"), {'login': login, 'senha': senha}).fetchone()
+
+    if user_data:
+        user = User(
+            user_id=user_data.ID,
+            login=user_data.Login,
+            sobrenome=user_data.Sobrenome,
+            funcao=user_data.Funcao,
+            foto_usuario_uri=user_data.FotoUsuarioURI
+        )
+        login_user(user)
+        return redirect(url_for('index'))
+    else:
+        return render_template('login.html', error="Login ou senha incorretos")
+    
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
+@app.route('/registrar')
+def registrar():
+    return render_template('registrar.html')
 
 @app.route('/add_livro', methods=['GET', 'POST'])
 def add_livro():
     mensagem = None
+    if current_user.funcao != 'Aluno':
+        print(current_user)
+        if request.method == 'POST':
+            isbn = request.form['isbn']
+            titulo = request.form['titulo']
+            autor = request.form['autor']
+            descricao = request.form['descricao']
+            categoria = request.form['categoria']
+            data_aquisicao = datetime.strptime(
+                request.form['data_aquisicao'], '%Y-%m-%d').date()
+            estado_conservacao = request.form['estado_conservacao']
+            localizacao_fisica = request.form['localizacao_fisica']
+            capa_livro_uri = request.form['capa_livro_uri']
 
-    if request.method == 'POST':
-        isbn = request.form['isbn']
-        titulo = request.form['titulo']
-        autor = request.form['autor']
-        descricao = request.form['descricao']
-        categoria = request.form['categoria']
-        data_aquisicao = datetime.strptime(
-            request.form['data_aquisicao'], '%Y-%m-%d').date()
-        estado_conservacao = request.form['estado_conservacao']
-        localizacao_fisica = request.form['localizacao_fisica']
-        capa_livro_uri = request.form['capa_livro_uri']
+            sql = text("""INSERT INTO Livros (ISBN, Titulo, Autor, Descricao, Categoria, DataAquisicao, EstadoConservacao, LocalizacaoFisica, CapaLivroURI) 
+                        VALUES (:isbn, :titulo, :autor, :descricao, :categoria, :data_aquisicao, :estado_conservacao, :localizacao_fisica, :capa_livro_uri)""")
 
-        sql = text("""INSERT INTO livros (ISBN, Titulo, Autor, Descricao, Categoria, DataAquisicao, EstadoConservacao, LocalizacaoFisica, CapaLivroURI) 
-                      VALUES (:isbn, :titulo, :autor, :descricao, :categoria, :data_aquisicao, :estado_conservacao, :localizacao_fisica, :capa_livro_uri)""")
-
-        try:
-            db.session.execute(sql, {
-                'isbn': isbn,
-                'titulo': titulo,
-                'autor': autor,
-                'descricao': descricao,
-                'categoria': categoria,
-                'data_aquisicao': data_aquisicao,
-                'estado_conservacao': estado_conservacao,
-                'localizacao_fisica': localizacao_fisica,
-                'capa_livro_uri': capa_livro_uri
-            })
-            db.session.commit()
-            mensagem = {'conteudo': 'Livro adicionado com sucesso!',
-                        'classe': 'mensagem-sucesso'}
-        except Exception as e:
-            db.session.rollback()
-            mensagem = {
-                'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
+            try:
+                db.session.execute(sql, {
+                    'isbn': isbn,
+                    'titulo': titulo,
+                    'autor': autor,
+                    'descricao': descricao,
+                    'categoria': categoria,
+                    'data_aquisicao': data_aquisicao,
+                    'estado_conservacao': estado_conservacao,
+                    'localizacao_fisica': localizacao_fisica,
+                    'capa_livro_uri': capa_livro_uri
+                })
+                db.session.commit()
+                mensagem = {'conteudo': 'Livro adicionado com sucesso!',
+                            'classe': 'mensagem-sucesso'}
+            except Exception as e:
+                db.session.rollback()
+                mensagem = {
+                    'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
 
     return render_template('cadastrar_livro.html', mensagem=mensagem)
 
@@ -530,6 +597,18 @@ def get_usuario(id):
         return jsonify(user_json)
     else:
         return jsonify({'error': 'Usuário não encontrado'}), 404
+    
+@app.route('/get_usuarios')
+def get_usuarios():
+    sql = text(
+        """SELECT Nome, Funcao FROM Usuarios"""
+    )
+
+    usuarios = db.session.execute(sql).fetchall()
+
+    usuarios_json = [{'Nome': usuario.Nome, 'Funcao': usuario.Funcao} for usuario in usuarios]
+
+    return jsonify(usuarios_json)
 
 
 # Emprestimos ---------------------------------------------
@@ -549,8 +628,8 @@ def add_emprestimo():
             """SELECT ID FROM Usuarios WHERE Usuarios.Nome = '{name}'""".format(name=name))
         sql_book = text(
             """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
-        id_user = engine.execute(sql_user)
-        id_book = engine.execute(sql_book)
+        id_user = db.session.execute(sql_user)
+        id_book = db.session.execute(sql_book)
         user_tuple = id_user.first()
         book_tuple = id_book.first()
         if user_tuple and book_tuple is not None:
@@ -559,7 +638,7 @@ def add_emprestimo():
             VALUES ({user}, {livro}, {material}, '{data_emp}', '{data_dev}');""".format(
                     user=user_tuple[0], livro=book_tuple[0], material=material, data_emp=data_emp, data_dev=data_dev))
             try:
-                engine.execute(sql)
+                db.session.execute(sql)
                 mensagem = {'conteudo': 'Emprestimo adicionado com sucesso!',
                             'classe': 'mensagem-sucesso'}
             except Exception as e:
@@ -585,14 +664,14 @@ def update_emprestimo():
             """SELECT ID FROM Usuarios WHERE Usuarios.Nome = '{name}'""".format(name=name))
         sql_book = text(
             """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
-        id_user = engine.execute(sql_user)
-        id_book = engine.execute(sql_book)
+        id_user = db.session.execute(sql_user)
+        id_book = db.session.execute(sql_book)
         user_tuple = id_user.first()
         book_tuple = id_book.first()
         if user_tuple and book_tuple is not None:
             sql = text(
                 """SELECT * FROM Emprestimos AS E WHERE E.IDUsuario = {id_user} AND E.IDLivro = {id_book} """.format(id_user=user_tuple[0], id_book=book_tuple[0]))
-            emprestimo = engine.execute(sql).first()
+            emprestimo = db.session.execute(sql).first()
             print(emprestimo)
 
             if emprestimo:
@@ -612,7 +691,7 @@ def update_emprestimo_form(id):
     mensagem = None
     sql = text(
         """SELECT * FROM Emprestimos AS E WHERE E.ID = {emp_id}""".format(emp_id=id))
-    emprestimo = engine.execute(sql).first()
+    emprestimo = db.session.execute(sql).first()
     print(emprestimo)
     if request.method == 'POST':
         data_emp = request.form['data_emprestimo']
@@ -624,7 +703,7 @@ def update_emprestimo_form(id):
                 data_emp=data_emp, data_dev=data_dev, status=status, emp_id=id))
         print(sql)
         try:
-            engine.execute(sql)
+            db.session.execute(sql)
             mensagem = {'conteudo': 'Emprestimo atualizado com sucesso!',
                         'classe': 'mensagem-sucesso'}
         except Exception as e:
@@ -640,9 +719,9 @@ def get_emprestimos_estudante(id):
     emprestimos = []
     sql = text(
         """SELECT * FROM Emprestimos AS E WHERE E.IDUsuario = {id_user}""".format(id_user=id))
-    result = engine.execute(sql)
+    result = db.session.execute(sql)
     print(result)
-    for row in engine.execute(sql):
+    for row in db.session.execute(sql):
         emprestimos.append(emprestimo_module.initialize(row))
 
     return emprestimos
@@ -661,14 +740,14 @@ def delete_emprestimo():
             """SELECT ID FROM Usuarios WHERE Usuarios.Nome = '{name}'""".format(name=name))
         sql_book = text(
             """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
-        id_user = engine.execute(sql_user).first()[0]
-        id_book = engine.execute(sql_book).first()[0]
+        id_user = db.session.execute(sql_user).first()[0]
+        id_book = db.session.execute(sql_book).first()[0]
 
         if name and isbn is not None:
             try:
                 sql = text(
                     """DELETE FROM Emprestimos WHERE IDUsuario = {id_user} AND IDLivro = {id_book} """.format(id_user=id_user, id_book=id_book))
-                engine.execute(sql).first()
+                db.session.execute(sql).first()
                 mensagem = {'conteudo': 'Livro excluído com sucesso!',
                             'classe': 'mensagem-sucesso'}
             except Exception as e:
@@ -691,13 +770,13 @@ def get_emprestimo():
             """SELECT ID FROM Usuarios WHERE Usuarios.Nome = '{name}'""".format(name=name))
         sql_book = text(
             """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
-        id_user = engine.execute(sql_user)
-        id_book = engine.execute(sql_book)
+        id_user = db.session.execute(sql_user)
+        id_book = db.session.execute(sql_book)
 
         if id_user and id_book.first is not None:
             sql = text(
                 """SELECT * FROM Emprestimos AS E WHERE E.IDUsuario = {id_user} AND E.IDLivro = {id_book} """.format(id_user=id_user.first()[0], id_book=id_book.first()[0]))
-            emprestimo = engine.execute(sql).first()
+            emprestimo = db.session.execute(sql).first()
 
             if emprestimo:
                 return emprestimo_module.initialize(emprestimo)
