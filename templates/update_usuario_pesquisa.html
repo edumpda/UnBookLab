@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesquisa de Usuário para Atualização</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f8f8;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            color: #333;
+        }
+
+        h1 {
+            margin-top: 50px;
+        }
+
+        form {
+            max-width: 400px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            text-align: left;
+        }
+
+        input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            color: #fff;
+        }
+
+        .success {
+            background-color: #4caf50;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            margin-top: 10px;
+        }
+
+        a {
+            text-decoration: none;
+            color: #333;
+            background-color: #eee;
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        a:hover {
+            background-color: #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>Pesquisa de Usuário para Atualização</h1>
+
+    {% if mensagem %}
+        <p class="{{ mensagem.classe }}">{{ mensagem.conteudo }}</p>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('update_usuario') }}">
+        <label for="id_pesquisa">ID do Usuário:</label>
+        <input type="text" id="id_pesquisa" name="id_pesquisa" required>
+
+        <button type="submit">Pesquisar Usuário</button>
+    </form>
+
+    <a href="{{ url_for('index') }}">Voltar à Página Inicial</a>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <!-- Adicione qualquer script adicional conforme necessário -->
+</body>
+</html>

@@ -533,61 +533,71 @@ def add_usuario():
 
 
 @app.route('/update_usuario', methods=['GET', 'POST'])
+@login_required
 def update_usuario():
     mensagem = None
 
-    if request.method == 'POST':
-        user_id = request.form.get('user_id')
+    if current_user.funcao != 'aluno':
+        if request.method == 'POST':
+            id_pesquisa = request.form.get('id_pesquisa')
+            # Certifique-se de que ID não seja None antes de fazer a consulta
+            if id_pesquisa is not None:
+                usuario = db.session.execute(text(
+                    "SELECT * FROM usuarios WHERE ID = :id"), {'id': id_pesquisa}).fetchone()
 
-        sql_user = text("SELECT ID FROM usuarios WHERE usuarios.ID = :user_id")
-        id_user = db.session.execute(sql_user, {'user_id': user_id}).first()
+                if usuario:
+                    return redirect(url_for('update_usuario_form', id=id_pesquisa))
+                else:
+                    mensagem = {
+                        'conteudo': 'Usuário não encontrado.', 'classe': 'mensagem-erro'}
 
-        if id_user is not None:
-            return redirect(url_for('update_usuario_form', id=id_user[0]))
-        else:
-            mensagem = {'conteudo': 'Usuário não encontrado.', 'classe': 'mensagem-erro'}
-
-    return render_template('update_usuario.html', mensagem=mensagem)
+        return render_template('update_usuario_pesquisa.html', mensagem=mensagem)
 
 
-@app.route('/update_usuario_form/<id>', methods=['GET', 'POST'])
+@app.route('/update_usuario/<int:id>', methods=['GET', 'POST'])
+@login_required
 def update_usuario_form(id):
+    usuario = db.session.execute(
+        text("SELECT * FROM usuarios WHERE ID = :id"), {'id': id}).fetchone()
     mensagem = None
 
-    sql = text("SELECT * FROM usuarios WHERE ID = :user_id")
-    usuario = db.session.execute(sql, {'user_id': id}).first()
+    if current_user.funcao != 'aluno':
+        if request.method == 'POST':
+            if usuario:
+                data = request.form
+                sql = text("""
+                    UPDATE usuarios
+                    SET Nome = :nome,
+                        Sobrenome = :sobrenome,
+                        Funcao = :funcao,
+                        Login = :login,
+                        SenhaCriptografada = :senha,
+                        FotoUsuarioURI = :foto_usuario_uri
+                    WHERE ID = :id
+                """)
 
-    if usuario is None:
-        mensagem = {'conteudo': 'Usuário não encontrado.', 'classe': 'mensagem-erro'}
-    elif request.method == 'POST':
-        nome = request.form['nome']
-        sobrenome = request.form['sobrenome']
-        funcao = request.form['funcao']
-        login = request.form['login']
-        senha = request.form['senha']
-        foto = request.form['foto']
+                try:
+                    db.session.execute(sql, {
+                        'nome': data.get('nome', usuario.Nome),
+                        'sobrenome': data.get('sobrenome', usuario.Sobrenome),
+                        'funcao': data.get('funcao', usuario.Funcao),
+                        'login': data.get('login', usuario.Login),
+                        'senha': data.get('senha', usuario.SenhaCriptografada),
+                        'foto_usuario_uri': data.get('foto_usuario_uri', usuario.FotoUsuarioURI),
+                        'id': id
+                    })
+                    db.session.commit()
+                    mensagem = {
+                        'conteudo': 'Usuário atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
+                except Exception as e:
+                    db.session.rollback()
+                    mensagem = {
+                        'conteudo': f'Erro ao atualizar o usuário: {str(e)}', 'classe': 'mensagem-erro'}
+            else:
+                mensagem = {
+                    'conteudo': 'Usuário não encontrado para atualização.', 'classe': 'mensagem-erro'}
 
-        update_sql = text("""
-            UPDATE usuarios
-            SET Nome = :nome,
-                Sobrenome = :sobrenome,
-                Funcao = :funcao,
-                Login = :login,
-                SenhaCriptografada = :senha,
-                FotoUsuarioURI = :foto
-            WHERE ID = :user_id
-        """)
-
-        try:
-            db.session.execute(update_sql, {'nome': nome, 'sobrenome': sobrenome, 'funcao': funcao,
-                                            'login': login, 'senha': senha, 'foto': foto, 'user_id': id})
-            db.session.commit()
-            mensagem = {'conteudo': 'Usuário atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
-        except Exception as e:
-            db.session.rollback()
-            mensagem = {'conteudo': f'Erro ao atualizar usuário: {str(e)}', 'classe': 'mensagem-erro'}
-
-    return render_template('update_usuario_pesquisa.html', usuario=usuario, mensagem=mensagem)
+    return render_template('update_usuario.html', usuario=usuario, mensagem=mensagem)
 
 
 
