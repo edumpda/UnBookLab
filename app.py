@@ -1,20 +1,16 @@
 from flask import Flask, jsonify, request, render_template, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
-from models import db, Livros, MaterialDidatico, Usuario, Emprestimo
 from datetime import datetime
-import json
+from sqlalchemy import text
+from sqlalchemy import create_engine
+import emprestimo_module
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+
 
 app = Flask(__name__)
-<<<<<<< Updated upstream
-# COLOQUE A URL DO SEU BANCO NA LINHA 9, AINDA NÃO ESTÁ INTEGRADO
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:lucasql@localhost:3306/biblioteca'
-=======
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:lucasql@localhost:3306/Biblioteca'
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'chave'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
@@ -22,17 +18,19 @@ app.config['SQLALCHEMY_ECHO'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_PASSWORD'] = 'password'
 
+db = SQLAlchemy()
+
 db.init_app(app)
 
-<<<<<<< Updated upstream
-=======
 login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
 
+
 @login_manager.user_loader
 def load_user(user_id):
-    user_data = db.session.execute(text("SELECT * FROM usuarios WHERE ID = :user_id"), {'user_id': user_id}).fetchone()
+    user_data = db.session.execute(text(
+        "SELECT * FROM Usuarios WHERE ID = :user_id"), {'user_id': user_id}).fetchone()
     if user_data:
         return User(
             user_id=user_data.ID,
@@ -54,7 +52,8 @@ class User(UserMixin):
 
     @staticmethod
     def get(user_id):
-        user_data = db.session.execute(text("SELECT * FROM Usuarios WHERE ID = :user_id"), {'user_id': user_id}).fetchone()
+        user_data = db.session.execute(text(
+            "SELECT * FROM Usuarios WHERE ID = :user_id"), {'user_id': user_id}).fetchone()
         if user_data:
             return User(
                 user_data.ID,
@@ -66,169 +65,198 @@ class User(UserMixin):
             )
         return None
 
+
 engine = create_engine(
     'mysql://root:lucasql@localhost:3306/Biblioteca'
 )
 
-#################################### HOME LOGIN #########################################################
-'''
 @app.route('/')
 def home():
     return render_template('home.html')
+
+@app.route('/index')
+def index():
+    return render_template('index.html')
+
 
 @app.route('/login')
 def login():
     return render_template('login.html')
 
+
 @app.route('/perform_login', methods=['POST'])
 def perform_login():
     login = request.form.get('login')
     senha = request.form.get('senha')
-
-    print("Login:", login) 
-    print("Senha:", senha)
-    user = db.session.execute(text("SELECT * FROM usuarios WHERE Login = :login AND SenhaCriptografada = :senha"), {'login': login, 'senha': senha}).fetchone()
-
-    if user:
+    user_data = db.session.execute(text(
+        "SELECT * FROM Usuarios WHERE Login = :login"), {'login': login}).fetchone()
+    if user_data and check_password_hash(user_data.SenhaCriptografada, senha):
+        user = User(
+            user_id=user_data.ID,
+            login=user_data.Login,
+            sobrenome=user_data.Sobrenome,
+            funcao=user_data.Funcao,
+            foto_usuario_uri=user_data.FotoUsuarioURI
+        )
+        login_user(user)
         return redirect(url_for('index'))
-
     else:
         return render_template('login.html', error="Login ou senha incorretos")
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
 
 @app.route('/registrar')
 def registrar():
     return render_template('registrar.html')
 
-@app.route('/index')
-def index():
-    return render_template('index.html')
-'''
-######################################################################################################
-
->>>>>>> Stashed changes
-
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-
-@app.route('/create_db')
-def create_db():
-    db.create_all()
-    return 'Banco de dados criado'
-
 
 @app.route('/add_livro', methods=['GET', 'POST'])
+@login_required
 def add_livro():
     mensagem = None
+    if current_user.funcao != 'aluno':
+        if request.method == 'POST':
+            isbn = request.form['isbn']
+            titulo = request.form['titulo']
+            autor = request.form['autor']
+            descricao = request.form['descricao']
+            categoria = request.form['categoria']
+            data_aquisicao = datetime.strptime(
+                request.form['data_aquisicao'], '%Y-%m-%d').date()
+            estado_conservacao = request.form['estado_conservacao']
+            localizacao_fisica = request.form['localizacao_fisica']
+            capa_livro_uri = request.form['capa_livro_uri']
 
-    if request.method == 'POST':
-        isbn = request.form['isbn']
-        titulo = request.form['titulo']
-        autor = request.form['autor']
-        descricao = request.form['descricao']
-        categoria = request.form['categoria']
-        data_aquisicao = datetime.strptime(request.form['data_aquisicao'], '%Y-%m-%d').date()
-        estado_conservacao = request.form['estado_conservacao']
-        localizacao_fisica = request.form['localizacao_fisica']
-        capa_livro_uri = request.form['capa_livro_uri']
+            sql = text("""INSERT INTO Livros (ISBN, Titulo, Autor, Descricao, Categoria, DataAquisicao, EstadoConservacao, LocalizacaoFisica, CapaLivroURI) 
+                        VALUES (:isbn, :titulo, :autor, :descricao, :categoria, :data_aquisicao, :estado_conservacao, :localizacao_fisica, :capa_livro_uri)""")
 
-        livro = Livros(
-            ISBN=isbn,
-            Titulo=titulo,
-            Autor=autor,
-            Descricao=descricao,
-            Categoria=categoria,
-            DataAquisicao=data_aquisicao,
-            EstadoConservacao=estado_conservacao,
-            LocalizacaoFisica=localizacao_fisica,
-            CapaLivroURI=capa_livro_uri
-        )
-        try:
-            db.session.add(livro)
-            db.session.commit()
-            mensagem = {'conteudo': 'Livro adicionado com sucesso!', 'classe': 'mensagem-sucesso'}
-        except Exception as e:
-            db.session.rollback()
-            mensagem = {'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
+            try:
+                db.session.execute(sql, {
+                    'isbn': isbn,
+                    'titulo': titulo,
+                    'autor': autor,
+                    'descricao': descricao,
+                    'categoria': categoria,
+                    'data_aquisicao': data_aquisicao,
+                    'estado_conservacao': estado_conservacao,
+                    'localizacao_fisica': localizacao_fisica,
+                    'capa_livro_uri': capa_livro_uri
+                })
+                db.session.commit()
+                mensagem = {'conteudo': 'Livro adicionado com sucesso!',
+                            'classe': 'mensagem-sucesso'}
+            except Exception as e:
+                db.session.rollback()
+                mensagem = {
+                    'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
 
     return render_template('cadastrar_livro.html', mensagem=mensagem)
 
 
-
 @app.route('/update_livro', methods=['GET', 'POST'])
+@login_required
 def update_livro():
     mensagem = None
     livro = None
+    if current_user.funcao != 'aluno':
+        if request.method == 'POST':
+            isbn_pesquisa = request.form.get('isbn_pesquisa')
 
-    if request.method == 'POST':
-        isbn_pesquisa = request.form.get('isbn_pesquisa')
-        app.logger.info(f"Formulário Recebido: {request.form}")
-        print(f"Conteúdo do Formulário: {request.form}")
-        print(f"ISBN Pesquisado: {isbn_pesquisa}")
+            # Certifique-se de que ISBN não seja None antes de fazer a consulta
+            if isbn_pesquisa is not None:
+                livro = db.session.execute(text(
+                    "SELECT * FROM livros WHERE ISBN = :isbn"), {'isbn': isbn_pesquisa}).fetchone()
 
-        # Certifique-se de que ISBN não seja None antes de fazer a consulta
-        if isbn_pesquisa is not None:
-            livro = Livros.query.get(isbn_pesquisa)
-
-        if livro:
-            return redirect(url_for('update_livro_form', isbn=isbn_pesquisa))
-        else:
-            mensagem = {'conteudo': 'Livro não encontrado.', 'classe': 'mensagem-erro'}
+            if livro:
+                return redirect(url_for('update_livro_form', isbn=isbn_pesquisa))
+            else:
+                mensagem = {'conteudo': 'Livro não encontrado.',
+                            'classe': 'mensagem-erro'}
 
     return render_template('update_livro_pesquisa.html', mensagem=mensagem)
 
 
 @app.route('/update_livro/<isbn>', methods=['GET', 'POST'])
+@login_required
 def update_livro_form(isbn):
-    livro = Livros.query.get(isbn)
+    livro = db.session.execute(
+        text("SELECT * FROM livros WHERE ISBN = :isbn"), {'isbn': isbn}).fetchone()
     mensagem = None
+    if current_user.funcao != 'aluno':
+        if request.method == 'POST':
+            if livro:
+                data = request.form
+                sql = text("""
+                    UPDATE livros
+                    SET Titulo = :titulo,
+                        Autor = :autor,
+                        Descricao = :descricao,
+                        Categoria = :categoria,
+                        DataAquisicao = :data_aquisicao,
+                        EstadoConservacao = :estado_conservacao,
+                        LocalizacaoFisica = :localizacao_fisica,
+                        CapaLivroURI = :capa_livro_uri
+                    WHERE ISBN = :isbn
+                """)
 
-    if request.method == 'POST':
-        if livro:
-            data = request.form
-            livro.Titulo = data.get('titulo', livro.Titulo)
-            livro.Autor = data.get('autor', livro.Autor)
-            livro.Descricao = data.get('descricao', livro.Descricao)
-            livro.Categoria = data.get('categoria', livro.Categoria)
-            livro.DataAquisicao = datetime.strptime(data.get('data_aquisicao', str(livro.DataAquisicao)), '%Y-%m-%d').date()
-            livro.EstadoConservacao = data.get('estado_conservacao', livro.EstadoConservacao)
-            livro.LocalizacaoFisica = data.get('localizacao_fisica', livro.LocalizacaoFisica)
-            livro.CapaLivroURI = data.get('capa_livro_uri', livro.CapaLivroURI)
+                try:
+                    db.session.execute(sql, {
+                        'titulo': data.get('titulo', livro.Titulo),
+                        'autor': data.get('autor', livro.Autor),
+                        'descricao': data.get('descricao', livro.Descricao),
+                        'categoria': data.get('categoria', livro.Categoria),
+                        'data_aquisicao': datetime.strptime(data.get('data_aquisicao', str(livro.DataAquisicao)), '%Y-%m-%d').date(),
+                        'estado_conservacao': data.get('estado_conservacao', livro.EstadoConservacao),
+                        'localizacao_fisica': data.get('localizacao_fisica', livro.LocalizacaoFisica),
+                        'capa_livro_uri': data.get('capa_livro_uri', livro.CapaLivroURI),
+                        'isbn': isbn
+                    })
+                    db.session.commit()
+                    mensagem = {'conteudo': 'Livro atualizado com sucesso!',
+                                'classe': 'mensagem-sucesso'}
+                except Exception as e:
+                    db.session.rollback()
+                    mensagem = {
+                        'conteudo': f'Erro ao atualizar o livro: {str(e)}', 'classe': 'mensagem-erro'}
+            else:
+                mensagem = {
+                    'conteudo': 'Livro não encontrado para atualização.', 'classe': 'mensagem-erro'}
 
-            try:
-                db.session.commit()
-                mensagem = {'conteudo': 'Livro atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
-            except Exception as e:
-                db.session.rollback()
-                mensagem = {'conteudo': f'Erro ao atualizar o livro: {str(e)}', 'classe': 'mensagem-erro'}
-        else:
-            mensagem = {'conteudo': 'Livro não encontrado para atualização.', 'classe': 'mensagem-erro'}
-    
     return render_template('update_livro.html', livro=livro, mensagem=mensagem)
 
 
-
-
 @app.route('/delete_livro', methods=['GET', 'POST'])
+@login_required
 def delete_livro():
     mensagem = None
     livro = None
+    if current_user.funcao != 'aluno':
+        if request.method == 'POST':
+            isbn = request.form.get('isbn')
+            livro = db.session.execute(
+                text("SELECT * FROM livros WHERE ISBN = :isbn"), {'isbn': isbn}).fetchone()
 
-    if request.method == 'POST':
-        isbn = request.form.get('isbn')
-        livro = Livros.query.get(isbn)
+            if livro:
+                sql = text("DELETE FROM livros WHERE ISBN = :isbn")
 
-        if livro:
-            try:
-                db.session.delete(livro)
-                db.session.commit()
-                mensagem = {'conteudo': 'Livro excluído com sucesso!', 'classe': 'mensagem-sucesso'}
-            except Exception as e:
-                db.session.rollback()
-                mensagem = {'conteudo': f'Erro ao excluir o livro: {str(e)}', 'classe': 'mensagem-erro'}
-        else:
-            mensagem = {'conteudo': 'Livro não encontrado para exclusão.', 'classe': 'mensagem-erro'}
+                try:
+                    db.session.execute(sql, {'isbn': isbn})
+                    db.session.commit()
+                    mensagem = {'conteudo': 'Livro excluído com sucesso!',
+                                'classe': 'mensagem-sucesso'}
+                except Exception as e:
+                    db.session.rollback()
+                    mensagem = {
+                        'conteudo': f'Erro ao excluir o livro: {str(e)}', 'classe': 'mensagem-erro'}
+            else:
+                mensagem = {
+                    'conteudo': 'Livro não encontrado para exclusão.', 'classe': 'mensagem-erro'}
 
     return render_template('delete_livro.html', livro=livro, mensagem=mensagem)
 
@@ -241,7 +269,11 @@ def get_livro():
         if not isbn:
             return jsonify({'error': 'ISBN não fornecido'}), 400
 
-        livro = Livros.query.get(isbn)
+        sql = text(
+            """SELECT * FROM livros WHERE ISBN = :isbn"""
+        )
+
+        livro = db.session.execute(sql, {'isbn': isbn}).fetchone()
 
         if livro is None:
             return jsonify({'error': 'Livro não encontrado'}), 404
@@ -263,13 +295,19 @@ def get_livro():
     return render_template('get_livro.html')
 
 
-
-
 @app.route('/get_livros')
 def get_livros():
-    livros = Livros.query.all()
-    livros_json = [{'ISBN': livro.ISBN, 'Titulo': livro.Titulo, 'Autor': livro.Autor} for livro in livros]
+    sql = text(
+        """SELECT ISBN, Titulo, Autor FROM livros"""
+    )
+
+    livros = db.session.execute(sql).fetchall()
+
+    livros_json = [{'ISBN': livro.ISBN, 'Titulo': livro.Titulo,
+                    'Autor': livro.Autor} for livro in livros]
+
     return jsonify(livros_json)
+
 
 @app.route('/livros_crud')
 def livros_crud():
@@ -279,101 +317,130 @@ def livros_crud():
 
 
 @app.route('/add_material', methods=['GET', 'POST'])
+@login_required
 def add_material():
     mensagem = None
+    if current_user.funcao != 'aluno':
+        if request.method == 'POST':
+            descricao = request.form['descricao']
+            categoria = request.form['categoria']
+            numero_serie = request.form['numero_serie']
+            estado_conservacao = request.form['estado_conservacao']
+            localizacao_fisica = request.form['localizacao_fisica']
+            foto_material_uri = request.form['foto_material_uri']
 
-    if request.method == 'POST':
-        descricao = request.form['descricao']
-        categoria = request.form['categoria']
-        numero_serie = request.form['numero_serie']
-        estado_conservacao = request.form['estado_conservacao']
-        localizacao_fisica = request.form['localizacao_fisica']
-        foto_material_uri = request.form['foto_material_uri']
+            sql = text(
+                """INSERT INTO materiaisdidaticos (Descricao, Categoria, NumeroSerie, EstadoConservacao, LocalizacaoFisica, FotoMaterialURI) 
+                VALUES ('{descricao}', '{categoria}', '{numero_serie}', '{estado_conservacao}', '{localizacao_fisica}', '{foto_material_uri}');""".format(
+                    descricao=descricao, categoria=categoria, numero_serie=numero_serie,
+                    estado_conservacao=estado_conservacao, localizacao_fisica=localizacao_fisica, foto_material_uri=foto_material_uri))
 
-        material = MaterialDidatico(
-            Descricao=descricao,
-            Categoria=categoria,
-            NumeroSerie=numero_serie,
-            EstadoConservacao=estado_conservacao,
-            LocalizacaoFisica=localizacao_fisica,
-            FotoMaterialURI=foto_material_uri
-        )
-        try:
-            db.session.add(material)
-            db.session.commit()
-            mensagem = {'conteudo': 'Material didático adicionado com sucesso!', 'classe': 'mensagem-sucesso'}
-        except Exception as e:
-            db.session.rollback()
-            mensagem = {'conteudo': f'Erro ao adicionar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
+            try:
+                db.session.execute(sql)
+                db.session.commit()
+                mensagem = {
+                    'conteudo': 'Material didático adicionado com sucesso!', 'classe': 'mensagem-sucesso'}
+            except Exception as e:
+                db.session.rollback()
+                mensagem = {
+                    'conteudo': f'Erro ao adicionar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
 
     return render_template('cadastrar_material.html', mensagem=mensagem)
 
 
 @app.route('/update_material', methods=['GET', 'POST'])
+@login_required
 def update_material():
     mensagem = None
     material = None
+    if current_user.funcao != 'aluno':
+        if request.method == 'POST':
+            id_pesquisa = request.form.get('id_pesquisa')
+            # Certifique-se de que ID não seja None antes de fazer a consulta
+            if id_pesquisa is not None:
+                material = db.session.execute(text(
+                    "SELECT * FROM materiaisdidaticos WHERE ID = :id"), {'id': id_pesquisa}).fetchone()
 
-    if request.method == 'POST':
-        id_pesquisa = request.form.get('id_pesquisa')
-        # Certifique-se de que ID não seja None antes de fazer a consulta
-        if id_pesquisa is not None:
-            material = MaterialDidatico.query.get(id_pesquisa)
+            if material:
+                return redirect(url_for('update_material_form', id=id_pesquisa))
+            else:
+                mensagem = {
+                    'conteudo': 'Material didático não encontrado.', 'classe': 'mensagem-erro'}
 
-        if material:
-            return redirect(url_for('update_material_form', id=id_pesquisa))
-        else:
-            mensagem = {'conteudo': 'Material didático não encontrado.', 'classe': 'mensagem-erro'}
-
-    return render_template('update_material_pesquisa.html', mensagem=mensagem)
+        return render_template('update_material_pesquisa.html', mensagem=mensagem)
 
 
 @app.route('/update_material/<id>', methods=['GET', 'POST'])
+@login_required
 def update_material_form(id):
-    material = MaterialDidatico.query.get(id)
+    material = db.session.execute(
+        text("SELECT * FROM materiaisdidaticos WHERE ID = :id"), {'id': id}).fetchone()
     mensagem = None
+    if current_user.funcao != 'aluno':
+        if request.method == 'POST':
+            if material:
+                data = request.form
+                sql = text("""
+                    UPDATE materiaisdidaticos
+                    SET Descricao = :descricao,
+                        Categoria = :categoria,
+                        NumeroSerie = :numero_serie,
+                        EstadoConservacao = :estado_conservacao,
+                        LocalizacaoFisica = :localizacao_fisica,
+                        FotoMaterialURI = :foto_material_uri
+                    WHERE ID = :id
+                """)
 
-    if request.method == 'POST':
-        if material:
-            data = request.form
-            material.Descricao = data.get('descricao', material.Descricao)
-            material.Categoria = data.get('categoria', material.Categoria)
-            material.NumeroSerie = data.get('numero_serie', material.NumeroSerie)
-            material.EstadoConservacao = data.get('estado_conservacao', material.EstadoConservacao)
-            material.LocalizacaoFisica = data.get('localizacao_fisica', material.LocalizacaoFisica)
-            material.FotoMaterialURI = data.get('foto_material_uri', material.FotoMaterialURI)
+                try:
+                    db.session.execute(sql, {
+                        'descricao': data.get('descricao', material.Descricao),
+                        'categoria': data.get('categoria', material.Categoria),
+                        'numero_serie': data.get('numero_serie', material.NumeroSerie),
+                        'estado_conservacao': data.get('estado_conservacao', material.EstadoConservacao),
+                        'localizacao_fisica': data.get('localizacao_fisica', material.LocalizacaoFisica),
+                        'foto_material_uri': data.get('foto_material_uri', material.FotoMaterialURI),
+                        'id': id
+                    })
+                    db.session.commit()
+                    mensagem = {
+                        'conteudo': 'Material didático atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
+                except Exception as e:
+                    db.session.rollback()
+                    mensagem = {
+                        'conteudo': f'Erro ao atualizar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
+            else:
+                mensagem = {
+                    'conteudo': 'Material didático não encontrado para atualização.', 'classe': 'mensagem-erro'}
 
-            try:
-                db.session.commit()
-                mensagem = {'conteudo': 'Material didático atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
-            except Exception as e:
-                db.session.rollback()
-                mensagem = {'conteudo': f'Erro ao atualizar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
-        else:
-            mensagem = {'conteudo': 'Material didático não encontrado para atualização.', 'classe': 'mensagem-erro'}
-    
     return render_template('update_material.html', material=material, mensagem=mensagem)
 
 
 @app.route('/delete_material', methods=['GET', 'POST'])
+@login_required
 def delete_material():
     mensagem = None
     material = None
+    if current_user.funcao != 'aluno':
+        if request.method == 'POST':
+            id = request.form.get('id')
+            material = db.session.execute(
+                text("SELECT * FROM materiaisdidaticos WHERE ID = :id"), {'id': id}).fetchone()
 
-    if request.method == 'POST':
-        id = request.form.get('id')
-        material = MaterialDidatico.query.get(id)
+            if material:
+                sql = text("DELETE FROM materiaisdidaticos WHERE ID = :id")
 
-        if material:
-            try:
-                db.session.delete(material)
-                db.session.commit()
-                mensagem = {'conteudo': 'Material didático excluído com sucesso!', 'classe': 'mensagem-sucesso'}
-            except Exception as e:
-                db.session.rollback()
-                mensagem = {'conteudo': f'Erro ao excluir o material didático: {str(e)}', 'classe': 'mensagem-erro'}
-        else:
-            mensagem = {'conteudo': 'Material didático não encontrado para exclusão.', 'classe': 'mensagem-erro'}
+                try:
+                    db.session.execute(sql, {'id': id})
+                    db.session.commit()
+                    mensagem = {
+                        'conteudo': 'Material didático excluído com sucesso!', 'classe': 'mensagem-sucesso'}
+                except Exception as e:
+                    db.session.rollback()
+                    mensagem = {
+                        'conteudo': f'Erro ao excluir o material didático: {str(e)}', 'classe': 'mensagem-erro'}
+            else:
+                mensagem = {
+                    'conteudo': 'Material didático não encontrado para exclusão.', 'classe': 'mensagem-erro'}
 
     return render_template('delete_material.html', material=material, mensagem=mensagem)
 
@@ -386,7 +453,11 @@ def get_material():
         if not id:
             return jsonify({'error': 'ID não fornecido'}), 400
 
-        material = MaterialDidatico.query.get(id)
+        sql = text(
+            """SELECT * FROM materiaisdidaticos WHERE ID = :id"""
+        )
+
+        material = db.session.execute(sql, {'id': id}).fetchone()
 
         if material is None:
             return jsonify({'error': 'Material didático não encontrado'}), 404
@@ -408,8 +479,14 @@ def get_material():
 
 @app.route('/get_materiais')
 def get_materiais():
-    materiais = MaterialDidatico.query.all()
-    materiais_json = [{'ID': material.ID, 'Descricao': material.Descricao, 'Categoria': material.Categoria} for material in materiais]
+    sql = text(
+        """SELECT ID, Descricao, Categoria FROM materiaisdidaticos"""
+    )
+
+    materiais = db.session.execute(sql).fetchall()
+
+    materiais_json = [{'ID': material.ID, 'Descricao': material.Descricao,
+                       'Categoria': material.Categoria} for material in materiais]
     return jsonify(materiais_json)
 
 
@@ -421,195 +498,10 @@ def materiais_crud():
 
 @app.route('/usuarios_crud')
 def usuarios_crud():
-<<<<<<< Updated upstream
-    # Lógica para a página de CRUD de usuários
-=======
->>>>>>> Stashed changes
     return render_template('usuarios_crud.html')
 
-<<<<<<< Updated upstream
-@app.route('/add_usuario')
+@app.route('/add_usuario', methods=['POST'])
 def add_usuario():
-<<<<<<< Updated upstream
-    user = Usuario(
-        Nome='name',
-        Sobrenome='last name',
-        Funcao='function',
-        Login='login',
-        SenhaCriptografada='password',
-        FotoUsuarioURI='photo'
-    )
-    db.session.add(user)
-    db.session.commit()
-    return 'user add'
-
-
-@app.route('/update_usuario/<id>', methods=['PUT'])
-def update_usuario(id):
-    user = Usuario.query.get(id)
-    if user is None:
-        return jsonify({'error': 'Usuario não encontrado'}), 404
-
-    data = request.json
-    user.Nome = data.get('Nome', user.Nome)
-    user.Sobrenome = data.get('Sobrenome', user.Sobrenome)
-    user.Funcao = data.get('Funcao', user.Funcao)
-    user.Login = data.get('Login', user.Login)
-    user.SenhaCriptografada = data.get(
-        'SenhaCriptografada', user.SenhaCriptografada)
-    user.FotoUsuarioURI = data.get('FotoUsuarioURI', user.FotoUsuarioURI)
-
-    db.session.commit()
-    return jsonify({'message': 'Usuario atualizado com sucesso'}), 200
-=======
-@app.route('/add_usuario', methods=['GET', 'POST'])
-def add_usuario():
-    # Lógica para a página de cadastro de usuários
-    mensagem = None
-    if request.method == 'POST':
-        nome = request.form['nome']
-        sobrenome = request.form['sobrenome']
-        login = request.form['login']
-        senha = request.form['senha']
-        tipo = request.form['tipo']
-        foto = request.form['foto']
-
-        funcao = tipo
-
-        sql = text("""
-            INSERT INTO Usuarios (Nome, Sobrenome, Funcao, Login, SenhaCriptografada, FotoUsuarioURI)
-            VALUES (:nome, :sobrenome, :funcao, :login, :senha, :foto)
-        """)
-
-        try:
-            db.session.execute(sql, {
-                'nome': nome,
-                'sobrenome': sobrenome,
-                'funcao': funcao,
-                'login': login,
-                'senha': generate_password_hash(senha, method='pbkdf2:sha256'),
-                'foto': foto
-            })
-
-            db.session.commit()
-            mensagem = {'conteudo': 'Usuário adicionado com sucesso!',
-                        'classe': 'mensagem-sucesso'}
-        except Exception as e:
-            db.session.rollback()
-            mensagem = {
-                'conteudo': f'Erro ao adicionar usuário: {str(e)}', 'classe': 'mensagem-erro'}
-
-    return render_template('registar.html', mensagem=mensagem)
-
-@app.route('/update_usuario', methods=['GET', 'POST'])
-def update_usuario():
-    mensagem = None
-    usuario = None
-
-    if request.method == 'POST':
-        # Assuming you have a form with appropriate fields for user updates
-        # Adjust the form field names as needed
-        user_id = request.form.get('user_id')
-        nome = request.form.get('nome')
-        sobrenome = request.form.get('sobrenome')
-        funcao = request.form.get('funcao')
-        login = request.form.get('login')
-        senha = request.form.get('senha')
-        foto = request.form.get('foto')
-
-        sql_user = text(
-            """SELECT ID FROM usuarios WHERE usuarios.ID = '{user_id}'""".format(user_id=user_id))
-        id_user = db.session.execute(sql_user)
-        user_tuple = id_user.first()
-
-        if user_tuple is not None:
-            sql = text("""
-                SELECT * FROM usuarios WHERE ID = {user_id}
-            """.format(user_id=user_tuple[0]))
-
-            usuario = db.session.execute(sql).first()
-
-            if usuario:
-                return redirect(url_for('update_usuario_form', id=usuario[0]))
-            else:
-                mensagem = {'conteudo': 'Usuário não encontrado.',
-                            'classe': 'mensagem-erro'}
-        else:
-            mensagem = {'conteudo': 'Usuário não encontrado.',
-                        'classe': 'mensagem-erro'}
-
-    return render_template('update_usuario.html', mensagem=mensagem)
-
-
-@app.route('/update_usuario_form/<id>', methods=['GET', 'POST'])
-def update_usuario_form(id):
-    mensagem = None
-    sql = text(
-        """SELECT * FROM usuarios WHERE ID = {user_id}""".format(user_id=id))
-    usuario = db.session.execute(sql).first()
-
-    if request.method == 'POST':
-        nome = request.form['nome']
-        sobrenome = request.form['sobrenome']
-        funcao = request.form['funcao']
-        login = request.form['login']
-        senha = request.form['senha']
-        foto = request.form['foto']
-
-        sql = text("""
-            UPDATE usuarios
-            SET Nome = '{nome}',
-                Sobrenome = '{sobrenome}',
-                Funcao = '{funcao}',
-                Login = '{login}',
-                SenhaCriptografada = '{senha}',
-                FotoUsuarioURI = '{foto}'
-            WHERE ID = {user_id}
-        """.format(
-            nome=nome, sobrenome=sobrenome, funcao=funcao, login=login, senha=senha, foto=foto, user_id=id))
-
-        try:
-            db.session.execute(sql)
-            mensagem = {'conteudo': 'Usuário atualizado com sucesso!',
-                        'classe': 'mensagem-sucesso'}
-        except Exception as e:
-            db.session.rollback()
-            mensagem = {
-                'conteudo': f'Erro ao atualizar usuário: {str(e)}', 'classe': 'mensagem-erro'}
-
-    return render_template('update_usuario.html', usuario=usuario, mensagem=mensagem)
-
->>>>>>> Stashed changes
-
-
-@app.route('/delete_usuario/<id>', methods=['DELETE'])
-def delete_usuario(id):
-    user = Usuario.query.get(id)
-    if user is None:
-        return jsonify({'error': 'Usuario não encontrado'}), 404
-
-<<<<<<< Updated upstream
-    db.session.delete(user)
-    db.session.commit()
-    return jsonify({'message': 'Usuario excluído com sucesso'}), 200
-=======
-    if user_existente:
-        try:
-            db.session.execute(
-                text("DELETE FROM usuarios WHERE ID = :id"), {'id': id})
-            db.session.commit()
-            return jsonify({'message': 'Usuário excluído com sucesso'}), 200
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'error': f'Erro ao excluir o usuário: {str(e)}'}), 500
-    else:
-        return jsonify({'error': 'Usuário não encontrado'}), 404
->>>>>>> Stashed changes
-
-# Example of generating URL for the delete_usuario endpoint
-# Make sure to replace 'user_id' with the actual ID of the user you want to delete
-url = url_for('delete_usuario', id=user_id)
-=======
     try:
         if request.method == 'POST':
             nome = request.form['nome']
@@ -629,7 +521,7 @@ url = url_for('delete_usuario', id=user_id)
                 'sobrenome': sobrenome,
                 'funcao': funcao,
                 'login': login,
-                'senha': generate_password_hash(senha, method='pbkdf2:sha256'),
+                'senha': generate_password_hash(senha, method='sha256'),
                 'foto': foto
             })
 
@@ -638,72 +530,64 @@ url = url_for('delete_usuario', id=user_id)
     except Exception as e:
         db.session.rollback()
         return f'Erro ao adicionar usuário: {str(e)}'
-    
-@app.route('/update_usuario/<int:id>', methods=['GET', 'POST'])
-@login_required
-def update_usuario_form(id):
-    usuario = db.session.execute(
-        text("SELECT * FROM usuarios WHERE ID = :id"), {'id': id}).fetchone()
-    mensagem = None
-
-    if current_user.funcao != 'aluno':
-        if request.method == 'POST':
-            if usuario:
-                data = request.form
-                sql = text("""
-                    UPDATE usuarios
-                    SET Nome = :nome,
-                        Sobrenome = :sobrenome,
-                        Funcao = :funcao,
-                        Login = :login,
-                        SenhaCriptografada = :senha,
-                        FotoUsuarioURI = :foto_usuario_uri
-                    WHERE ID = :id
-                """)
-
-                try:
-                    db.session.execute(sql, {
-                        'nome': data.get('nome', usuario.Nome),
-                        'sobrenome': data.get('sobrenome', usuario.Sobrenome),
-                        'funcao': data.get('funcao', usuario.Funcao),
-                        'login': data.get('login', usuario.Login),
-                        'senha': data.get('senha', usuario.SenhaCriptografada),
-                        'foto_usuario_uri': data.get('foto_usuario_uri', usuario.FotoUsuarioURI),
-                        'id': id
-                    })
-                    db.session.commit()
-                    mensagem = {
-                        'conteudo': 'Usuário atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
-                except Exception as e:
-                    db.session.rollback()
-                    mensagem = {
-                        'conteudo': f'Erro ao atualizar o usuário: {str(e)}', 'classe': 'mensagem-erro'}
-            else:
-                mensagem = {
-                    'conteudo': 'Usuário não encontrado para atualização.', 'classe': 'mensagem-erro'}
-
-    return render_template('update_usuario.html', usuario=usuario, mensagem=mensagem)
 
 @app.route('/update_usuario', methods=['GET', 'POST'])
-@login_required
 def update_usuario():
     mensagem = None
 
-    if current_user.funcao != 'aluno':
-        if request.method == 'POST':
-            id_pesquisa = request.form.get('id_pesquisa')
-            # Certifique-se de que ID não seja None antes de fazer a consulta
-            if id_pesquisa is not None:
-                usuario = db.session.execute(text(
-                    "SELECT * FROM usuarios WHERE ID = :id"), {'id': id_pesquisa}).fetchone()
+    if request.method == 'POST':
+        user_id = request.form.get('user_id')
 
-                if usuario:
-                    return redirect(url_for('update_usuario_form', id=id_pesquisa))
-                else:
-                    mensagem = {
-                        'conteudo': 'Usuário não encontrado.', 'classe': 'mensagem-erro'}
+        sql_user = text("SELECT ID FROM usuarios WHERE usuarios.ID = :user_id")
+        id_user = db.session.execute(sql_user, {'user_id': user_id}).first()
 
-        return render_template('update_usuario_pesquisa.html', mensagem=mensagem)
+        if id_user is not None:
+            return redirect(url_for('update_usuario_form', id=id_user[0]))
+        else:
+            mensagem = {'conteudo': 'Usuário não encontrado.', 'classe': 'mensagem-erro'}
+
+    return render_template('update_usuario.html', mensagem=mensagem)
+
+
+@app.route('/update_usuario_form/<id>', methods=['GET', 'POST'])
+def update_usuario_form(id):
+    mensagem = None
+
+    sql = text("SELECT * FROM usuarios WHERE ID = :user_id")
+    usuario = db.session.execute(sql, {'user_id': id}).first()
+
+    if usuario is None:
+        mensagem = {'conteudo': 'Usuário não encontrado.', 'classe': 'mensagem-erro'}
+    elif request.method == 'POST':
+        nome = request.form['nome']
+        sobrenome = request.form['sobrenome']
+        funcao = request.form['funcao']
+        login = request.form['login']
+        senha = request.form['senha']
+        foto = request.form['foto']
+
+        update_sql = text("""
+            UPDATE usuarios
+            SET Nome = :nome,
+                Sobrenome = :sobrenome,
+                Funcao = :funcao,
+                Login = :login,
+                SenhaCriptografada = :senha,
+                FotoUsuarioURI = :foto
+            WHERE ID = :user_id
+        """)
+
+        try:
+            db.session.execute(update_sql, {'nome': nome, 'sobrenome': sobrenome, 'funcao': funcao,
+                                            'login': login, 'senha': senha, 'foto': foto, 'user_id': id})
+            db.session.commit()
+            mensagem = {'conteudo': 'Usuário atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
+        except Exception as e:
+            db.session.rollback()
+            mensagem = {'conteudo': f'Erro ao atualizar usuário: {str(e)}', 'classe': 'mensagem-erro'}
+
+    return render_template('update_usuario_pesquisa.html', usuario=usuario, mensagem=mensagem)
+
 
 
 @app.route('/delete_usuario', methods=['POST'])
@@ -734,25 +618,13 @@ def delete_usuario():
                     'conteudo': 'Usuário não encontrado para exclusão.', 'classe': 'mensagem-erro'}
 
     return render_template('delete_usuario.html', usuario=usuario, mensagem=mensagem)
->>>>>>> Stashed changes
 
 
 @app.route('/get_usuario/<id>')
 def get_usuario(id):
-    user = Usuario.query.get(id)
-    if user is None:
-        return jsonify({'error': 'Material não encontrado'}), 404
+    user = db.session.execute(
+        text("SELECT * FROM usuarios WHERE ID = :id"), {'id': id}).fetchone()
 
-<<<<<<< Updated upstream
-    user_json = {
-        'Nome': user.Nome,
-        'Sobrenome': user.Sobrenome,
-        'Funcao': user.Funcao,
-        'Login': user.Login,
-        'SenhaCriptografada': user.SenhaCriptografada,
-        'user.FotoUsuarioURI': user.FotoUsuarioURI
-    }
-=======
     if user:
         user_json = {
             'Nome': user.Nome,
@@ -765,7 +637,8 @@ def get_usuario(id):
         return jsonify(user_json)
     else:
         return jsonify({'error': 'Usuário não encontrado'}), 404
-    
+
+
 @app.route('/get_usuarios')
 def get_usuarios():
     sql = text(
@@ -777,71 +650,189 @@ def get_usuarios():
     usuarios_json = [{'Nome': usuario.Nome, 'Sobrenome': usuario.Sobrenome, 'Funcao': usuario.Funcao} for usuario in usuarios]
 
     return jsonify(usuarios_json)
->>>>>>> Stashed changes
-
-    return jsonify(user_json)
 
 
 # Emprestimos ---------------------------------------------
 
 
-@app.route('/add_emprestimo')
+@app.route('/add_emprestimo', methods=['GET', 'POST'])
 def add_emprestimo():
-    emprestimo = Emprestimo(
-        IDUsuario=Usuario.query.first().ID,
-        IDLivro=Livros.query.first().ISBN,
-        IDMaterialDidatico=MaterialDidatico.query.first().ID,
-        DataEmprestimo="2017-01-01",
-        DataDevolucaoPrevista="2017-01-01",
-        Status="dshfjdfshj",
-    )
-    db.session.add(emprestimo)
-    db.session.commit()
-    return 'emprestimo add'
+    mensagem = None
+    if request.method == 'POST':
+        name = request.form['user']
+        isbn = request.form['book']
+        material = request.form['material']
+        data_emp = request.form['data_emprestimo']
+        data_dev = request.form['data_devolucao']
+        # status = request.form['status']
+        sql_user = text(
+            """SELECT ID FROM Usuarios WHERE Usuarios.Nome = '{name}'""".format(name=name))
+        sql_book = text(
+            """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
+        id_user = db.session.execute(sql_user)
+        id_book = db.session.execute(sql_book)
+        user_tuple = id_user.first()
+        book_tuple = id_book.first()
+        if user_tuple and book_tuple is not None:
+            sql = text(
+                """INSERT INTO Emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista) 
+            VALUES ({user}, {livro}, {material}, '{data_emp}', '{data_dev}');""".format(
+                    user=user_tuple[0], livro=book_tuple[0], material=material, data_emp=data_emp, data_dev=data_dev))
+            try:
+                db.session.execute(sql)
+                mensagem = {'conteudo': 'Emprestimo adicionado com sucesso!',
+                            'classe': 'mensagem-sucesso'}
+            except Exception as e:
+                mensagem = {
+                    'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
+        else:
+            mensagem = {
+                'conteudo': f'Erro ao adicionar o livro', 'classe': 'mensagem-erro'}
+
+    return render_template('cadastrar_emprestimo.html', mensagem=mensagem)
 
 
-@app.route('/update_emprestimo/<id>', methods=['PUT'])
-def update_emprestimo(id):
-    emprestimo = Emprestimo.query.get(id)
-    if emprestimo is None:
-        return jsonify({'error': 'Emprestimo não encontrado'}), 404
+@app.route('/update_emprestimo', methods=['GET', 'POST'])
+def update_emprestimo():
+    mensagem = None
+    emprestimo = None
 
-    data = request.json
-    emprestimo.Login = data.get('DataEmprestimo', emprestimo.DataEmprestimo)
-    emprestimo.DataDevolucaoPrevista = data.get(
-        "2017-01-01", emprestimo.DataDevolucaoPrevista)
-    emprestimo.Status = data.get('Status', emprestimo.Status)
+    if request.method == 'POST':
+        name = request.form.get('name')
+        isbn = request.form.get('isbn')
 
-    db.session.commit()
-    return jsonify({'message': 'Emprestimo atualizado com sucesso'}), 200
+        sql_user = text(
+            """SELECT ID FROM Usuarios WHERE Usuarios.Nome = '{name}'""".format(name=name))
+        sql_book = text(
+            """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
+        id_user = db.session.execute(sql_user)
+        id_book = db.session.execute(sql_book)
+        user_tuple = id_user.first()
+        book_tuple = id_book.first()
+        if user_tuple and book_tuple is not None:
+            sql = text(
+                """SELECT * FROM Emprestimos AS E WHERE E.IDUsuario = {id_user} AND E.IDLivro = {id_book} """.format(id_user=user_tuple[0], id_book=book_tuple[0]))
+            emprestimo = db.session.execute(sql).first()
+
+            if emprestimo:
+                return redirect(url_for('update_emprestimo_form', id=emprestimo[0]))
+            else:
+                mensagem = {'conteudo': 'emprestimo não encontrado.',
+                            'classe': 'mensagem-erro'}
+        else:
+            mensagem = {'conteudo': 'emprestimo não encontrado.',
+                        'classe': 'mensagem-erro'}
+
+    return render_template('update_emprestimo_pesquisa.html', mensagem=mensagem)
 
 
-@app.route('/delete_emprestimo/<id>', methods=['DELETE'])
-def delete_emprestimo(id):
-    emprestimo = Emprestimo.query.get(id)
-    if emprestimo is None:
-        return jsonify({'error': 'Emprestimo não encontrado'}), 404
+@app.route('/update_emprestimo_form/<id>', methods=['GET', 'POST'])
+def update_emprestimo_form(id):
+    mensagem = None
+    sql = text(
+        """SELECT * FROM Emprestimos AS E WHERE E.ID = {emp_id}""".format(emp_id=id))
+    emprestimo = db.session.execute(sql).first()
+    if request.method == 'POST':
+        data_emp = request.form['data_emprestimo']
+        data_dev = request.form['data_devolucao']
+        sql = text(
+            """UPDATE Emprestimos SET DataEmprestimo = '{data_emp}', 
+            DataDevolucaoPrevista = '{data_dev}' WHERE ID = {emp_id};""".format(
+                data_emp=data_emp, data_dev=data_dev, emp_id=id))
+        try:
+            db.session.execute(sql)
+            mensagem = {'conteudo': 'Emprestimo atualizado com sucesso!',
+                        'classe': 'mensagem-sucesso'}
+        except Exception as e:
+            db.session.rollback()
+            mensagem = {
+                'conteudo': f'Erro ao atualizar emprestimo: {str(e)}', 'classe': 'mensagem-erro'}
 
-    db.session.delete(emprestimo)
-    db.session.commit()
-    return jsonify({'message': 'Emprestimo excluído com sucesso'}), 200
+    return render_template('update_emprestimo_form.html', emprestimo=emprestimo, mensagem=mensagem)
 
 
-@app.route('/get_emprestimo/<id>')
-def get_emprestimo(id):
-    emprestimo = Emprestimo.query.get(id)
-    if emprestimo is None:
-        return jsonify({'error': 'Material não encontrado'}), 404
+@app.route('/get_emprestimos_estudante/<id>')
+def get_emprestimos_estudante(id):
+    emprestimos = []
+    sql = text(
+        """SELECT * FROM Emprestimos AS E WHERE E.IDUsuario = {id_user}""".format(id_user=id))
+    result = db.session.execute(sql)
+    for row in db.session.execute(sql):
+        emprestimos.append(emprestimo_module.initialize(row))
 
-    emprestimo_json = {
-        'DataEmprestimo': emprestimo.DataEmprestimo,
-        'DataDevolucaoPrevista': emprestimo.DataDevolucaoPrevista,
-        'Status': emprestimo.Status,
-    }
+    return emprestimos
 
-    return jsonify(emprestimo_json)
+
+@app.route('/delete_emprestimo', methods=['GET', 'POST'])
+def delete_emprestimo():
+    mensagem = None
+    emprestimo = None
+
+    if request.method == 'POST':
+        name = request.form.get('name')
+        isbn = request.form.get('isbn')
+
+        sql_user = text(
+            """SELECT ID FROM Usuarios WHERE Usuarios.Nome = '{name}'""".format(name=name))
+        sql_book = text(
+            """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
+        id_user = db.session.execute(sql_user).first()[0]
+        id_book = db.session.execute(sql_book).first()[0]
+
+        if name and isbn is not None:
+            try:
+                sql = text(
+                    """DELETE FROM Emprestimos WHERE IDUsuario = {id_user} AND IDLivro = {id_book} """.format(id_user=id_user, id_book=id_book))
+                db.session.execute(sql)
+                mensagem = {'conteudo': 'Livro excluído com sucesso!',
+                            'classe': 'mensagem-sucesso'}
+            except Exception as e:
+                db.session.rollback()
+                mensagem = {
+                    'conteudo': f'Erro ao excluir o livro: {str(e)}', 'classe': 'mensagem-erro'}
+    return render_template('delete_emprestimo.html', mensagem=mensagem)
+
+
+@app.route('/get_emprestimo', methods=['GET', 'POST'])
+def get_emprestimo():
+    mensagem = None
+    emprestimo = None
+
+    if request.method == 'POST':
+        name = request.form.get('name')
+        isbn = request.form.get('isbn')
+
+        sql_user = text(
+            """SELECT ID FROM Usuarios WHERE Usuarios.Nome = '{name}'""".format(name=name))
+        sql_book = text(
+            """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
+        id_user = db.session.execute(sql_user)
+        id_book = db.session.execute(sql_book)
+
+        if id_user and id_book.first is not None:
+            sql = text(
+                """SELECT * FROM Emprestimos AS E WHERE E.IDUsuario = {id_user} AND E.IDLivro = {id_book} """.format(id_user=id_user.first()[0], id_book=id_book.first()[0]))
+            emprestimo = db.session.execute(sql).first()
+
+            if emprestimo:
+                return emprestimo_module.initialize(emprestimo)
+            else:
+                mensagem = {'conteudo': 'emprestimo não encontrado.',
+                            'classe': 'mensagem-erro'}
+        else:
+            mensagem = {'conteudo': 'emprestimo não encontrado.',
+                        'classe': 'mensagem-erro'}
+
+    return render_template('get_emprestimo.html', mensagem=mensagem)
+
+
+@app.route('/emprestimos_crud')
+def emprestimos_crud():
+        if current_user.funcao != 'aluno':
+            return render_template('emprestimos_crud.html')
+        else:
+            return render_template('emprestimos_crud.html', link='/get_emprestimos_estudante/{id_user}'.format(id_user=current_user.id))
 
 
 if __name__ == '__main__':
     app.run(debug=True)
-
