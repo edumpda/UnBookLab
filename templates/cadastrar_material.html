@@ -64,6 +64,16 @@
             color: #333;
             text-decoration: none;
         }
+        .button-voltar {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    background-color: #333;
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin-top: 20px;
+}
     </style>
 </head>
 <body>
@@ -91,5 +101,6 @@
     </form>
     <!-- Link para voltar à página principal -->
     <a href="{{ url_for('index') }}">Voltar para a página principal</a>
+    <a class="button-voltar" href="{{ url_for('materiais_crud') }}">Voltar para CRUD Material</a>
 </body>
 </html>
