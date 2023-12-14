@@ -10,7 +10,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:#teste123321@localhost:3306/Biblioteca'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://lucas:password@localhost:3306/Biblioteca'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'chave'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
@@ -70,9 +70,11 @@ engine = create_engine(
     'mysql://root:#teste123321@localhost:3306/Biblioteca'
 )
 
+
 @app.route('/')
 def home():
     return render_template('home.html')
+
 
 @app.route('/index')
 def index():
@@ -496,9 +498,11 @@ def materiais_crud():
 
 # Usuarios ---------------------------------------------------
 
+
 @app.route('/usuarios_crud')
 def usuarios_crud():
     return render_template('usuarios_crud.html')
+
 
 @app.route('/add_usuario', methods=['POST'])
 def add_usuario():
@@ -545,7 +549,8 @@ def update_usuario():
         if id_user is not None:
             return redirect(url_for('update_usuario_form', id=id_user[0]))
         else:
-            mensagem = {'conteudo': 'Usuário não encontrado.', 'classe': 'mensagem-erro'}
+            mensagem = {'conteudo': 'Usuário não encontrado.',
+                        'classe': 'mensagem-erro'}
 
     return render_template('update_usuario.html', mensagem=mensagem)
 
@@ -558,7 +563,8 @@ def update_usuario_form(id):
     usuario = db.session.execute(sql, {'user_id': id}).first()
 
     if usuario is None:
-        mensagem = {'conteudo': 'Usuário não encontrado.', 'classe': 'mensagem-erro'}
+        mensagem = {'conteudo': 'Usuário não encontrado.',
+                    'classe': 'mensagem-erro'}
     elif request.method == 'POST':
         nome = request.form['nome']
         sobrenome = request.form['sobrenome']
@@ -582,13 +588,14 @@ def update_usuario_form(id):
             db.session.execute(update_sql, {'nome': nome, 'sobrenome': sobrenome, 'funcao': funcao,
                                             'login': login, 'senha': senha, 'foto': foto, 'user_id': id})
             db.session.commit()
-            mensagem = {'conteudo': 'Usuário atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
+            mensagem = {'conteudo': 'Usuário atualizado com sucesso!',
+                        'classe': 'mensagem-sucesso'}
         except Exception as e:
             db.session.rollback()
-            mensagem = {'conteudo': f'Erro ao atualizar usuário: {str(e)}', 'classe': 'mensagem-erro'}
+            mensagem = {
+                'conteudo': f'Erro ao atualizar usuário: {str(e)}', 'classe': 'mensagem-erro'}
 
     return render_template('update_usuario_pesquisa.html', usuario=usuario, mensagem=mensagem)
-
 
 
 @app.route('/delete_usuario', methods=['POST'])
@@ -648,7 +655,8 @@ def get_usuarios():
 
     usuarios = db.session.execute(sql).fetchall()
 
-    usuarios_json = [{'Nome': usuario.Nome, 'Sobrenome': usuario.Sobrenome, 'Funcao': usuario.Funcao} for usuario in usuarios]
+    usuarios_json = [{'Nome': usuario.Nome, 'Sobrenome': usuario.Sobrenome,
+                      'Funcao': usuario.Funcao} for usuario in usuarios]
 
     return jsonify(usuarios_json)
 
@@ -670,15 +678,19 @@ def add_emprestimo():
             """SELECT ID FROM Usuarios WHERE Usuarios.Nome = '{name}'""".format(name=name))
         sql_book = text(
             """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
+        sql_material = text(
+            """SELECT ID FROM MateriaisDidaticos WHERE Descricao = '{material}'""".format(material=material))
         id_user = db.session.execute(sql_user)
         id_book = db.session.execute(sql_book)
         user_tuple = id_user.first()
         book_tuple = id_book.first()
+        id_material = db.session.execute(sql_material)
+        material_tuple = id_material.first()
         if user_tuple and book_tuple is not None:
             sql = text(
                 """INSERT INTO Emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista) 
             VALUES ({user}, {livro}, {material}, '{data_emp}', '{data_dev}');""".format(
-                    user=user_tuple[0], livro=book_tuple[0], material=material, data_emp=data_emp, data_dev=data_dev))
+                    user=user_tuple[0], livro=book_tuple[0], material=material_tuple[0], data_emp=data_emp, data_dev=data_dev))
             try:
                 db.session.execute(sql)
                 mensagem = {'conteudo': 'Emprestimo adicionado com sucesso!',
@@ -829,10 +841,46 @@ def get_emprestimo():
 
 @app.route('/emprestimos_crud')
 def emprestimos_crud():
-        if current_user.funcao != 'aluno':
-            return render_template('emprestimos_crud.html')
+    if current_user.funcao != 'aluno':
+        return render_template('emprestimos_crud.html')
+    else:
+        return render_template('emprestimos_crud.html', link='/get_emprestimos_estudante/{id_user}'.format(id_user=current_user.id))
+
+
+@app.route('/add_emprestimo_estudante', methods=['GET', 'POST'])
+def add_emprestimo_estudante():
+    mensagem = None
+    if request.method == 'POST':
+        isbn = request.form['book']
+        data_emp = request.form['data_emprestimo']
+        data_dev = request.form['data_devolucao']
+        material = request.form['material']
+        # status = request.form['status']
+        sql_book = text(
+            """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
+        sql_material = text(
+            """SELECT ID FROM MateriaisDidaticos WHERE Descricao = '{material}'""".format(material=material))
+        id_book = db.session.execute(sql_book)
+        book_tuple = id_book.first()
+        id_material = db.session.execute(sql_material)
+        material_tuple = id_material.first()
+        if book_tuple is not None:
+            sql = text(
+                """INSERT INTO Emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista) 
+            VALUES ({user}, {livro}, {material}, '{data_emp}', '{data_dev}');""".format(
+                    user=current_user.id, livro=book_tuple[0], material=material_tuple[0], data_emp=data_emp, data_dev=data_dev))
+            try:
+                db.session.execute(sql)
+                mensagem = {'conteudo': 'Emprestimo adicionado com sucesso!',
+                            'classe': 'mensagem-sucesso'}
+            except Exception as e:
+                mensagem = {
+                    'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
         else:
-            return render_template('emprestimos_crud.html', link='/get_emprestimos_estudante/{id_user}'.format(id_user=current_user.id))
+            mensagem = {
+                'conteudo': f'Erro ao adicionar o livro', 'classe': 'mensagem-erro'}
+
+    return render_template('add_emprestimo_estudante.html', mensagem=mensagem)
 
 
 if __name__ == '__main__':
