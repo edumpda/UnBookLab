@@ -30,8 +30,15 @@ login_manager.init_app(app)
 def load_user(user_id):
     user_data = db.session.execute(text("SELECT * FROM usuarios WHERE ID = :user_id"), {'user_id': user_id}).fetchone()
     if user_data:
-        return User(user_data.ID)
+        return User(
+            user_id=user_data.ID,
+            login=user_data.Login,
+            sobrenome=user_data.Sobrenome,
+            funcao=user_data.Funcao,
+            foto_usuario_uri=user_data.FotoUsuarioURI
+        )
     return None
+
 
 class User(UserMixin):
     def __init__(self, user_id, login=None, sobrenome=None, funcao=None, foto_usuario_uri=None):
