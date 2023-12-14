@@ -601,14 +601,15 @@ def update_usuario_form(id):
 
 
 
-@app.route('/delete_usuario', methods=['POST'])
+@app.route('/delete_usuario', methods=['GET', 'POST'])
 @login_required
 def delete_usuario():
     mensagem = None
     usuario = None
+
     if current_user.funcao != 'aluno':
         if request.method == 'POST':
-            id_usuario_a_excluir = request.form.get('id')
+            id_usuario_a_excluir = request.form.get('user_id')
             usuario = db.session.execute(
                 text("SELECT * FROM usuarios WHERE ID = :id"), {'id': id_usuario_a_excluir}).fetchone()
 
@@ -680,15 +681,19 @@ def add_emprestimo():
             """SELECT ID FROM Usuarios WHERE Usuarios.Nome = '{name}'""".format(name=name))
         sql_book = text(
             """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
+        sql_material = text(
+            """SELECT ID FROM MateriaisDidaticos WHERE Descricao = '{material}'""".format(material=material))
         id_user = db.session.execute(sql_user)
         id_book = db.session.execute(sql_book)
         user_tuple = id_user.first()
         book_tuple = id_book.first()
+        id_material = db.session.execute(sql_material)
+        material_tuple = id_material.first()
         if user_tuple and book_tuple is not None:
             sql = text(
                 """INSERT INTO Emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista) 
             VALUES ({user}, {livro}, {material}, '{data_emp}', '{data_dev}');""".format(
-                    user=user_tuple[0], livro=book_tuple[0], material=material, data_emp=data_emp, data_dev=data_dev))
+                    user=user_tuple[0], livro=book_tuple[0], material=material_tuple[0], data_emp=data_emp, data_dev=data_dev))
             try:
                 db.session.execute(sql)
                 mensagem = {'conteudo': 'Emprestimo adicionado com sucesso!',
@@ -836,14 +841,47 @@ def get_emprestimo():
 
     return render_template('get_emprestimo.html', mensagem=mensagem)
 
-
 @app.route('/emprestimos_crud')
 def emprestimos_crud():
-        if current_user.funcao != 'aluno':
-            return render_template('emprestimos_crud.html')
-        else:
-            return render_template('emprestimos_crud.html', link='/get_emprestimos_estudante/{id_user}'.format(id_user=current_user.id))
+    if current_user.funcao != 'aluno':
+        return render_template('emprestimos_crud.html')
+    else:
+        return render_template('emprestimos_crud.html', link='/get_emprestimos_estudante/{id_user}'.format(id_user=current_user.id))
 
+@app.route('/add_emprestimo_estudante', methods=['GET', 'POST'])
+def add_emprestimo_estudante():
+    mensagem = None
+    if request.method == 'POST':
+        isbn = request.form['book']
+        data_emp = request.form['data_emprestimo']
+        data_dev = request.form['data_devolucao']
+        material = request.form['material']
+        # status = request.form['status']
+        sql_book = text(
+            """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
+        sql_material = text(
+            """SELECT ID FROM MateriaisDidaticos WHERE Descricao = '{material}'""".format(material=material))
+        id_book = db.session.execute(sql_book)
+        book_tuple = id_book.first()
+        id_material = db.session.execute(sql_material)
+        material_tuple = id_material.first()
+        if book_tuple is not None:
+            sql = text(
+                """INSERT INTO Emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista) 
+            VALUES ({user}, {livro}, {material}, '{data_emp}', '{data_dev}');""".format(
+                    user=current_user.id, livro=book_tuple[0], material=material_tuple[0], data_emp=data_emp, data_dev=data_dev))
+            try:
+                db.session.execute(sql)
+                mensagem = {'conteudo': 'Emprestimo adicionado com sucesso!',
+                            'classe': 'mensagem-sucesso'}
+            except Exception as e:
+                mensagem = {
+                    'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
+        else:
+            mensagem = {
+                'conteudo': f'Erro ao adicionar o livro', 'classe': 'mensagem-erro'}
+
+    return render_template('add_emprestimo_estudante.html', mensagem=mensagem)
 
 if __name__ == '__main__':
     app.run(debug=True)

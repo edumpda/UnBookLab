@@ -57,7 +57,7 @@
         <li><a href="{{ url_for('delete_emprestimo') }}">Excluir Emprestimo</a></li>
         <li><a href="{{ url_for('index') }}">Voltar à Página Inicial</a></li>
         {% else %}
-        <li><a href="{{ url_for('add_emprestimo') }}">Cadastrar Emprestimo</a></li>
+        <li><a href="{{ url_for('add_emprestimo_estudante') }}">Cadastrar Emprestimo</a></li>
         <li><a  href='{{link}}'>Consultar Emprestimo</a></li>
         {% endif %}
     </ul>
