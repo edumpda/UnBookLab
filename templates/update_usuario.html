@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<<<<<<< Updated upstream
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Atualizar Usuário</title>
@@ -38,5 +39,42 @@
     <a href="{{ url_for('update_usuario', id=1) }}">Atualizar Usuário</a>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+=======
+    <!-- Adicione as metatags, links de estilo, etc., conforme necessário -->
+</head>
+<body>
+    <h1>Atualizar Usuário</h1>
+    <!-- Se houver uma mensagem de sucesso ou erro, exiba-a aqui -->
+    {% if mensagem %}
+        <div class="{{ mensagem.classe }}">{{ mensagem.conteudo }}</div>
+    {% endif %}
+    <!-- Formulário para confirmar a atualização -->
+    <form method="post" action="{{ url_for('update_usuario_form', id=usuario.ID) }}">
+        <!-- Inclua os campos do usuário que podem ser atualizados -->
+        <label for="nome">Nome:</label>
+        <input type="text" id="nome" name="nome" value="{{ usuario.Nome }}" required>
+
+        <label for="sobrenome">Sobrenome:</label>
+        <input type="text" id="sobrenome" name="sobrenome" value="{{ usuario.Sobrenome }}" required>
+
+        <label for="funcao">Função:</label>
+        <input type="text" id="funcao" name="funcao" value="{{ usuario.Funcao }}" required>
+
+        <label for="login">Login:</label>
+        <input type="text" id="login" name="login" value="{{ usuario.Login }}" required>
+
+        <label for="senha">Senha:</label>
+        <input type="password" id="senha" name="senha" placeholder="Deixe em branco para manter a mesma senha">
+
+        <label for="foto_usuario_uri">URL da Foto do Usuário:</label>
+        <input type="text" id="foto_usuario_uri" name="foto_usuario_uri" value="{{ usuario.FotoUsuarioURI }}">
+
+        <!-- Repita o mesmo padrão para outros campos -->
+        <button type="submit">Confirmar Atualização</button>
+    </form>
+    <!-- Link para voltar à página principal -->
+    <a class="button-voltar" href="{{ url_for('usuarios_crud') }}">Voltar para CRUD Usuários</a>
+    <a href="{{ url_for('index') }}">Voltar para a página principal</a>
+>>>>>>> Stashed changes
 </body>
 </html>

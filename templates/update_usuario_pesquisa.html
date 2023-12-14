@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesquisa de Usuário para Atualização</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Adicione qualquer estilo adicional conforme necessário -->
+</head>
+<body>
+    <h1>Pesquisa de Usuário para Atualização</h1>
+
+    {% if mensagem %}
+        <p class="{{ mensagem.classe }}">{{ mensagem.conteudo }}</p>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('update_usuario') }}">
+        <label for="id_pesquisa">ID do Usuário:</label>
+        <input type="text" id="id_pesquisa" name="id_pesquisa" required>
+
+        <button type="submit">Pesquisar Usuário</button>
+    </form>
+
+    <a href="{{ url_for('index') }}">Voltar à Página Inicial</a>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <!-- Adicione qualquer script adicional conforme necessário -->
+</body>
+</html>

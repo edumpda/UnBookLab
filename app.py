@@ -11,6 +11,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:lucasql@localhost:3306/bib
 =======
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:lucasql@localhost:3306/Biblioteca'
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'chave'
@@ -418,12 +421,16 @@ def materiais_crud():
 
 @app.route('/usuarios_crud')
 def usuarios_crud():
+<<<<<<< Updated upstream
     # Lógica para a página de CRUD de usuários
+=======
+>>>>>>> Stashed changes
     return render_template('usuarios_crud.html')
 
 <<<<<<< Updated upstream
 @app.route('/add_usuario')
 def add_usuario():
+<<<<<<< Updated upstream
     user = Usuario(
         Nome='name',
         Sobrenome='last name',
@@ -602,6 +609,132 @@ def delete_usuario(id):
 # Example of generating URL for the delete_usuario endpoint
 # Make sure to replace 'user_id' with the actual ID of the user you want to delete
 url = url_for('delete_usuario', id=user_id)
+=======
+    try:
+        if request.method == 'POST':
+            nome = request.form['nome']
+            sobrenome = request.form['sobrenome']
+            login = request.form['login']
+            senha = request.form['senha']
+            tipo = request.form['tipo']
+            foto = request.form['foto']
+
+            funcao = tipo
+
+            db.session.execute(text("""
+                INSERT INTO Usuarios (Nome, Sobrenome, Funcao, Login, SenhaCriptografada, FotoUsuarioURI)
+                VALUES (:nome, :sobrenome, :funcao, :login, :senha, :foto)
+            """), {
+                'nome': nome,
+                'sobrenome': sobrenome,
+                'funcao': funcao,
+                'login': login,
+                'senha': generate_password_hash(senha, method='pbkdf2:sha256'),
+                'foto': foto
+            })
+
+            db.session.commit()
+            return 'Usuário adicionado com sucesso!'
+    except Exception as e:
+        db.session.rollback()
+        return f'Erro ao adicionar usuário: {str(e)}'
+    
+@app.route('/update_usuario/<int:id>', methods=['GET', 'POST'])
+@login_required
+def update_usuario_form(id):
+    usuario = db.session.execute(
+        text("SELECT * FROM usuarios WHERE ID = :id"), {'id': id}).fetchone()
+    mensagem = None
+
+    if current_user.funcao != 'aluno':
+        if request.method == 'POST':
+            if usuario:
+                data = request.form
+                sql = text("""
+                    UPDATE usuarios
+                    SET Nome = :nome,
+                        Sobrenome = :sobrenome,
+                        Funcao = :funcao,
+                        Login = :login,
+                        SenhaCriptografada = :senha,
+                        FotoUsuarioURI = :foto_usuario_uri
+                    WHERE ID = :id
+                """)
+
+                try:
+                    db.session.execute(sql, {
+                        'nome': data.get('nome', usuario.Nome),
+                        'sobrenome': data.get('sobrenome', usuario.Sobrenome),
+                        'funcao': data.get('funcao', usuario.Funcao),
+                        'login': data.get('login', usuario.Login),
+                        'senha': data.get('senha', usuario.SenhaCriptografada),
+                        'foto_usuario_uri': data.get('foto_usuario_uri', usuario.FotoUsuarioURI),
+                        'id': id
+                    })
+                    db.session.commit()
+                    mensagem = {
+                        'conteudo': 'Usuário atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
+                except Exception as e:
+                    db.session.rollback()
+                    mensagem = {
+                        'conteudo': f'Erro ao atualizar o usuário: {str(e)}', 'classe': 'mensagem-erro'}
+            else:
+                mensagem = {
+                    'conteudo': 'Usuário não encontrado para atualização.', 'classe': 'mensagem-erro'}
+
+    return render_template('update_usuario.html', usuario=usuario, mensagem=mensagem)
+
+@app.route('/update_usuario', methods=['GET', 'POST'])
+@login_required
+def update_usuario():
+    mensagem = None
+
+    if current_user.funcao != 'aluno':
+        if request.method == 'POST':
+            id_pesquisa = request.form.get('id_pesquisa')
+            # Certifique-se de que ID não seja None antes de fazer a consulta
+            if id_pesquisa is not None:
+                usuario = db.session.execute(text(
+                    "SELECT * FROM usuarios WHERE ID = :id"), {'id': id_pesquisa}).fetchone()
+
+                if usuario:
+                    return redirect(url_for('update_usuario_form', id=id_pesquisa))
+                else:
+                    mensagem = {
+                        'conteudo': 'Usuário não encontrado.', 'classe': 'mensagem-erro'}
+
+        return render_template('update_usuario_pesquisa.html', mensagem=mensagem)
+
+
+@app.route('/delete_usuario', methods=['POST'])
+@login_required
+def delete_usuario():
+    mensagem = None
+    usuario = None
+    if current_user.funcao != 'aluno':
+        if request.method == 'POST':
+            id_usuario_a_excluir = request.form.get('id')
+            usuario = db.session.execute(
+                text("SELECT * FROM usuarios WHERE ID = :id"), {'id': id_usuario_a_excluir}).fetchone()
+
+            if usuario:
+                sql = text("DELETE FROM usuarios WHERE ID = :id")
+
+                try:
+                    db.session.execute(sql, {'id': id_usuario_a_excluir})
+                    db.session.commit()
+                    mensagem = {
+                        'conteudo': 'Usuário excluído com sucesso!', 'classe': 'mensagem-sucesso'}
+                except Exception as e:
+                    db.session.rollback()
+                    mensagem = {
+                        'conteudo': f'Erro ao excluir o usuário: {str(e)}', 'classe': 'mensagem-erro'}
+            else:
+                mensagem = {
+                    'conteudo': 'Usuário não encontrado para exclusão.', 'classe': 'mensagem-erro'}
+
+    return render_template('delete_usuario.html', usuario=usuario, mensagem=mensagem)
+>>>>>>> Stashed changes
 
 
 @app.route('/get_usuario/<id>')
