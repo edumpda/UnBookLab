@@ -10,7 +10,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:#teste123321@localhost:3306/Biblioteca'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://lucas:password@localhost:3306/Biblioteca'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'chave'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
@@ -26,9 +26,11 @@ login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
 
+
 @login_manager.user_loader
 def load_user(user_id):
-    user_data = db.session.execute(text("SELECT * FROM usuarios WHERE ID = :user_id"), {'user_id': user_id}).fetchone()
+    user_data = db.session.execute(text(
+        "SELECT * FROM Usuarios WHERE ID = :user_id"), {'user_id': user_id}).fetchone()
     if user_data:
         return User(
             user_id=user_data.ID,
@@ -50,7 +52,8 @@ class User(UserMixin):
 
     @staticmethod
     def get(user_id):
-        user_data = db.session.execute(text("SELECT * FROM Usuarios WHERE ID = :user_id"), {'user_id': user_id}).fetchone()
+        user_data = db.session.execute(text(
+            "SELECT * FROM Usuarios WHERE ID = :user_id"), {'user_id': user_id}).fetchone()
         if user_data:
             return User(
                 user_data.ID,
@@ -61,6 +64,7 @@ class User(UserMixin):
                 user_data.FotoUsuarioURI
             )
         return None
+
 
 engine = create_engine(
     'mysql://root:#teste123321@localhost:3306/Biblioteca'
@@ -107,18 +111,23 @@ def index():
     print(current_user.sobrenome, 'tela inicial')
     return render_template('index.html')
 
+
 @app.route('/login')
 def login():
     return render_template('login.html')
+
 
 @app.route('/perform_login', methods=['POST'])
 def perform_login():
     login = request.form.get('login')
     senha = request.form.get('senha')
-
-    user_data = db.session.execute(text("SELECT * FROM usuarios WHERE Login = :login AND SenhaCriptografada = :senha"), {'login': login, 'senha': senha}).fetchone()
-
-    if user_data:
+    user_data = db.session.execute(text(
+        "SELECT * FROM Usuarios WHERE Login = :login"), {'login': login}).fetchone()
+    print("hellloooooo")
+    print(user_data)
+    print(check_password_hash(user_data.SenhaCriptografada, senha))
+    if user_data and check_password_hash(user_data.SenhaCriptografada, senha):
+        print("inside ifebfgh")
         user = User(
             user_id=user_data.ID,
             login=user_data.Login,
@@ -131,22 +140,25 @@ def perform_login():
         return redirect(url_for('index'))
     else:
         return render_template('login.html', error="Login ou senha incorretos")
-    
+
+
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('index'))
 
+
 @app.route('/registrar')
 def registrar():
     return render_template('registrar.html')
+
 
 @app.route('/add_livro', methods=['GET', 'POST'])
 @login_required
 def add_livro():
     mensagem = None
-    if current_user.funcao != 'Aluno':
+    if current_user.funcao != 'aluno':
         print(current_user.funcao)
         print(current_user.foto_usuario_uri)
         print(current_user.sobrenome)
@@ -623,7 +635,8 @@ def get_usuario(id):
         return jsonify(user_json)
     else:
         return jsonify({'error': 'Usuário não encontrado'}), 404
-    
+
+
 @app.route('/get_usuarios')
 def get_usuarios():
     sql = text(
@@ -632,7 +645,8 @@ def get_usuarios():
 
     usuarios = db.session.execute(sql).fetchall()
 
-    usuarios_json = [{'Nome': usuario.Nome, 'Funcao': usuario.Funcao} for usuario in usuarios]
+    usuarios_json = [{'Nome': usuario.Nome, 'Funcao': usuario.Funcao}
+                     for usuario in usuarios]
 
     return jsonify(usuarios_json)
 

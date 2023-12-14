@@ -20,13 +20,13 @@ VALUES (3, 'Sistemas Operacionais I', 'Sistemas', 'MS003', '2022-01-01', 'Bom', 
 
 -- Insert data into the Usuarios table
 INSERT INTO Usuarios (ID, Nome, Sobrenome, Funcao, Login, SenhaCriptografada, FotoUsuarioURI)
-VALUES (1, 'Carlos', 'Silva', 'Desenvolvedor', 'carlos.silva', '123456', 'usuario1.jpg');
+VALUES (1, 'Carlos', 'Silva', 'Desenvolvedor', 'carlos.silva', 'sha256$RoZrEycUXtIpMVEl$624f17d0219f83c66d96233e4e03a9a68dca3ac906622b16c3fa3246b9c47578', 'usuario1.jpg');
 
 INSERT INTO Usuarios (ID, Nome, Sobrenome, Funcao, Login, SenhaCriptografada, FotoUsuarioURI)
-VALUES (2, 'Maria', 'Souza', 'Gerente de Projetos', 'maria.souza', '654321', 'usuario2.jpg');
+VALUES (2, 'Maria', 'Souza', 'Gerente de Projetos', 'maria.souza', 'sha256$bluaIK5MpjWZnSam$a46e315eb219889a92b84ccaeba1f487d87422434b4cad7b1d9a2f492405812a', 'usuario2.jpg');
 
 INSERT INTO Usuarios (ID, Nome, Sobrenome, Funcao, Login, SenhaCriptografada, FotoUsuarioURI)
-VALUES (3, 'João', 'Ferreira', 'Técnico em Informática', 'joao.ferreira', '789456', 'usuario3.jpg');
+VALUES (3, 'João', 'Ferreira', 'Técnico em Informática', 'joao.ferreira', 'sha256$tqL3XduUvhTh6EYJ$60cb0665d4db89961776ac37b3d9dacaed6573289082aa0ba11e0971aed8abc5', 'usuario3.jpg');
 
 INSERT INTO Emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista, Status)
 VALUES (1, '9783161484100', 2, '2024-11-14', '2024-11-28', 'Em andamento');

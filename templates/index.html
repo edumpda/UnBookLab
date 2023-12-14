@@ -61,6 +61,7 @@
 <body>
     <a class="login-button" href="{{ url_for('login') }}">Login</a>
     <h1>Biblioteca</h1>
+    {% if current_user.funcao != 'aluno': %}
     <a href="{{ url_for('livros_crud') }}">Gerenciar Livros</a>
     <a href="{{ url_for('materiais_crud') }}">Gerenciar Materiais Didáticos</a>
     <a href="{{ url_for('emprestimos_crud') }}">Gerenciar Emprestimos</a>
