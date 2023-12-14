@@ -696,11 +696,10 @@ def update_emprestimo_form(id):
     if request.method == 'POST':
         data_emp = request.form['data_emprestimo']
         data_dev = request.form['data_devolucao']
-        status = request.form['status']
         sql = text(
             """UPDATE Emprestimos SET DataEmprestimo = '{data_emp}', 
-            DataDevolucaoPrevista = '{data_dev}', Status = '{status}' WHERE ID = {emp_id};""".format(
-                data_emp=data_emp, data_dev=data_dev, status=status, emp_id=id))
+            DataDevolucaoPrevista = '{data_dev}' WHERE ID = {emp_id};""".format(
+                data_emp=data_emp, data_dev=data_dev, emp_id=id))
         print(sql)
         try:
             db.session.execute(sql)
