@@ -3,3 +3,4 @@ Flask-SQLAlchemy
 datetime
 mysqlclient
 python-decouple
+flask-login
