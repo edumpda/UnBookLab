@@ -3,55 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Biblioteca</title>
+    <title>CRUD de Usuários</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
         body {
             font-family: 'Arial', sans-serif;
             background-color: #f4f4f4;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             text-align: center;
             color: #333;
         }
 
         h1 {
-            margin-bottom: 20px;
+            margin-top: 50px;
             color: #555;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        li {
+            margin-top: 10px;
         }
 
         a {
             text-decoration: none;
-            color: #3498db;
-            border: 1px solid #3498db;
-            padding: 10px 20px;
+            color: #fff;
+            background-color: #3498db;
+            padding: 10px;
             border-radius: 4px;
             display: inline-block;
-            margin: 10px;
+            width: 200px;
             transition: background-color 0.3s ease;
         }
 
         a:hover {
-            background-color: #3498db;
-            color: #fff;
-        }
-
-        p {
-            margin-top: 20px;
-            color: #777;
+            background-color: #2980b9;
         }
     </style>
 </head>
 <body>
-    <h1>Biblioteca</h1>
-    <a href="{{ url_for('livros_crud') }}">Gerenciar Livros</a>
-    <a href="{{ url_for('materiais_crud') }}">Gerenciar Materiais Didáticos</a>
-<<<<<<< Updated upstream
-=======
-    <a href="{{ url_for('emprestimos_crud') }}">Gerenciar Emprestimos</a>
-    <a href="{{ url_for('usuarios_crud') }}">Gerenciar Usuarios</a>
->>>>>>> Stashed changes
-    <p>Seja bem-vindo à biblioteca virtual!</p>
+    <h1>CRUD de Usuários</h1>
+
+    <ul>
+        <li><a href="{{ url_for('add_usuario') }}">Cadastrar Usuário</a></li>
+        <li><a href="{{ url_for('update_usuario') }}">Atualizar Usuário</a></li>
+        <li><a href="{{ url_for('delete_usuario') }}">Excluir Usuário</a></li>
+       
+        <li><a href="{{ url_for('index') }}">Voltar à Página Inicial</a></li>
+    </ul>
+
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

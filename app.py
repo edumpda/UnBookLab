@@ -5,8 +5,13 @@ from datetime import datetime
 import json
 
 app = Flask(__name__)
+<<<<<<< Updated upstream
 # COLOQUE A URL DO SEU BANCO NA LINHA 9, AINDA NÃO ESTÁ INTEGRADO
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:lucasql@localhost:3306/biblioteca'
+=======
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:lucasql@localhost:3306/Biblioteca'
+>>>>>>> Stashed changes
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'chave'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
@@ -16,6 +21,88 @@ app.config['SQLALCHEMY_PASSWORD'] = 'password'
 
 db.init_app(app)
 
+<<<<<<< Updated upstream
+=======
+login_manager = LoginManager()
+login_manager.login_view = 'login'
+login_manager.init_app(app)
+
+@login_manager.user_loader
+def load_user(user_id):
+    user_data = db.session.execute(text("SELECT * FROM usuarios WHERE ID = :user_id"), {'user_id': user_id}).fetchone()
+    if user_data:
+        return User(
+            user_id=user_data.ID,
+            login=user_data.Login,
+            sobrenome=user_data.Sobrenome,
+            funcao=user_data.Funcao,
+            foto_usuario_uri=user_data.FotoUsuarioURI
+        )
+    return None
+
+
+class User(UserMixin):
+    def __init__(self, user_id, login=None, sobrenome=None, funcao=None, foto_usuario_uri=None):
+        self.id = user_id
+        self.login = login
+        self.sobrenome = sobrenome
+        self.funcao = funcao
+        self.foto_usuario_uri = foto_usuario_uri
+
+    @staticmethod
+    def get(user_id):
+        user_data = db.session.execute(text("SELECT * FROM Usuarios WHERE ID = :user_id"), {'user_id': user_id}).fetchone()
+        if user_data:
+            return User(
+                user_data.ID,
+                user_data.Nome,
+                user_data.Sobrenome,
+                user_data.Funcao,
+                user_data.Login,
+                user_data.FotoUsuarioURI
+            )
+        return None
+
+engine = create_engine(
+    'mysql://root:lucasql@localhost:3306/Biblioteca'
+)
+
+#################################### HOME LOGIN #########################################################
+'''
+@app.route('/')
+def home():
+    return render_template('home.html')
+
+@app.route('/login')
+def login():
+    return render_template('login.html')
+
+@app.route('/perform_login', methods=['POST'])
+def perform_login():
+    login = request.form.get('login')
+    senha = request.form.get('senha')
+
+    print("Login:", login) 
+    print("Senha:", senha)
+    user = db.session.execute(text("SELECT * FROM usuarios WHERE Login = :login AND SenhaCriptografada = :senha"), {'login': login, 'senha': senha}).fetchone()
+
+    if user:
+        return redirect(url_for('index'))
+
+    else:
+        return render_template('login.html', error="Login ou senha incorretos")
+
+@app.route('/registrar')
+def registrar():
+    return render_template('registrar.html')
+
+@app.route('/index')
+def index():
+    return render_template('index.html')
+'''
+######################################################################################################
+
+>>>>>>> Stashed changes
 
 @app.route('/')
 def index():
@@ -329,7 +416,12 @@ def materiais_crud():
 
 # Usuarios ---------------------------------------------------
 
+@app.route('/usuarios_crud')
+def usuarios_crud():
+    # Lógica para a página de CRUD de usuários
+    return render_template('usuarios_crud.html')
 
+<<<<<<< Updated upstream
 @app.route('/add_usuario')
 def add_usuario():
     user = Usuario(
@@ -362,6 +454,125 @@ def update_usuario(id):
 
     db.session.commit()
     return jsonify({'message': 'Usuario atualizado com sucesso'}), 200
+=======
+@app.route('/add_usuario', methods=['GET', 'POST'])
+def add_usuario():
+    # Lógica para a página de cadastro de usuários
+    mensagem = None
+    if request.method == 'POST':
+        nome = request.form['nome']
+        sobrenome = request.form['sobrenome']
+        login = request.form['login']
+        senha = request.form['senha']
+        tipo = request.form['tipo']
+        foto = request.form['foto']
+
+        funcao = tipo
+
+        sql = text("""
+            INSERT INTO Usuarios (Nome, Sobrenome, Funcao, Login, SenhaCriptografada, FotoUsuarioURI)
+            VALUES (:nome, :sobrenome, :funcao, :login, :senha, :foto)
+        """)
+
+        try:
+            db.session.execute(sql, {
+                'nome': nome,
+                'sobrenome': sobrenome,
+                'funcao': funcao,
+                'login': login,
+                'senha': generate_password_hash(senha, method='pbkdf2:sha256'),
+                'foto': foto
+            })
+
+            db.session.commit()
+            mensagem = {'conteudo': 'Usuário adicionado com sucesso!',
+                        'classe': 'mensagem-sucesso'}
+        except Exception as e:
+            db.session.rollback()
+            mensagem = {
+                'conteudo': f'Erro ao adicionar usuário: {str(e)}', 'classe': 'mensagem-erro'}
+
+    return render_template('registar.html', mensagem=mensagem)
+
+@app.route('/update_usuario', methods=['GET', 'POST'])
+def update_usuario():
+    mensagem = None
+    usuario = None
+
+    if request.method == 'POST':
+        # Assuming you have a form with appropriate fields for user updates
+        # Adjust the form field names as needed
+        user_id = request.form.get('user_id')
+        nome = request.form.get('nome')
+        sobrenome = request.form.get('sobrenome')
+        funcao = request.form.get('funcao')
+        login = request.form.get('login')
+        senha = request.form.get('senha')
+        foto = request.form.get('foto')
+
+        sql_user = text(
+            """SELECT ID FROM usuarios WHERE usuarios.ID = '{user_id}'""".format(user_id=user_id))
+        id_user = db.session.execute(sql_user)
+        user_tuple = id_user.first()
+
+        if user_tuple is not None:
+            sql = text("""
+                SELECT * FROM usuarios WHERE ID = {user_id}
+            """.format(user_id=user_tuple[0]))
+
+            usuario = db.session.execute(sql).first()
+
+            if usuario:
+                return redirect(url_for('update_usuario_form', id=usuario[0]))
+            else:
+                mensagem = {'conteudo': 'Usuário não encontrado.',
+                            'classe': 'mensagem-erro'}
+        else:
+            mensagem = {'conteudo': 'Usuário não encontrado.',
+                        'classe': 'mensagem-erro'}
+
+    return render_template('update_usuario.html', mensagem=mensagem)
+
+
+@app.route('/update_usuario_form/<id>', methods=['GET', 'POST'])
+def update_usuario_form(id):
+    mensagem = None
+    sql = text(
+        """SELECT * FROM usuarios WHERE ID = {user_id}""".format(user_id=id))
+    usuario = db.session.execute(sql).first()
+
+    if request.method == 'POST':
+        nome = request.form['nome']
+        sobrenome = request.form['sobrenome']
+        funcao = request.form['funcao']
+        login = request.form['login']
+        senha = request.form['senha']
+        foto = request.form['foto']
+
+        sql = text("""
+            UPDATE usuarios
+            SET Nome = '{nome}',
+                Sobrenome = '{sobrenome}',
+                Funcao = '{funcao}',
+                Login = '{login}',
+                SenhaCriptografada = '{senha}',
+                FotoUsuarioURI = '{foto}'
+            WHERE ID = {user_id}
+        """.format(
+            nome=nome, sobrenome=sobrenome, funcao=funcao, login=login, senha=senha, foto=foto, user_id=id))
+
+        try:
+            db.session.execute(sql)
+            mensagem = {'conteudo': 'Usuário atualizado com sucesso!',
+                        'classe': 'mensagem-sucesso'}
+        except Exception as e:
+            db.session.rollback()
+            mensagem = {
+                'conteudo': f'Erro ao atualizar usuário: {str(e)}', 'classe': 'mensagem-erro'}
+
+    return render_template('update_usuario.html', usuario=usuario, mensagem=mensagem)
+
+>>>>>>> Stashed changes
 
 
 @app.route('/delete_usuario/<id>', methods=['DELETE'])
@@ -370,9 +581,27 @@ def delete_usuario(id):
     if user is None:
         return jsonify({'error': 'Usuario não encontrado'}), 404
 
+<<<<<<< Updated upstream
     db.session.delete(user)
     db.session.commit()
     return jsonify({'message': 'Usuario excluído com sucesso'}), 200
+=======
+    if user_existente:
+        try:
+            db.session.execute(
+                text("DELETE FROM usuarios WHERE ID = :id"), {'id': id})
+            db.session.commit()
+            return jsonify({'message': 'Usuário excluído com sucesso'}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': f'Erro ao excluir o usuário: {str(e)}'}), 500
+    else:
+        return jsonify({'error': 'Usuário não encontrado'}), 404
+>>>>>>> Stashed changes
+
+# Example of generating URL for the delete_usuario endpoint
+# Make sure to replace 'user_id' with the actual ID of the user you want to delete
+url = url_for('delete_usuario', id=user_id)
 
 
 @app.route('/get_usuario/<id>')
@@ -381,6 +610,7 @@ def get_usuario(id):
     if user is None:
         return jsonify({'error': 'Material não encontrado'}), 404
 
+<<<<<<< Updated upstream
     user_json = {
         'Nome': user.Nome,
         'Sobrenome': user.Sobrenome,
@@ -389,8 +619,35 @@ def get_usuario(id):
         'SenhaCriptografada': user.SenhaCriptografada,
         'user.FotoUsuarioURI': user.FotoUsuarioURI
     }
+=======
+    if user:
+        user_json = {
+            'Nome': user.Nome,
+            'Sobrenome': user.Sobrenome,
+            'Funcao': user.Funcao,
+            'Login': user.Login,
+            'SenhaCriptografada': user.SenhaCriptografada,
+            'FotoUsuarioURI': user.FotoUsuarioURI
+        }
+        return jsonify(user_json)
+    else:
+        return jsonify({'error': 'Usuário não encontrado'}), 404
+    
+@app.route('/get_usuarios')
+def get_usuarios():
+    sql = text(
+        """SELECT Nome, Sobrenome, Funcao FROM Usuarios"""
+    )
+
+    usuarios = db.session.execute(sql).fetchall()
+
+    usuarios_json = [{'Nome': usuario.Nome, 'Sobrenome': usuario.Sobrenome, 'Funcao': usuario.Funcao} for usuario in usuarios]
+
+    return jsonify(usuarios_json)
+>>>>>>> Stashed changes
 
     return jsonify(user_json)
+
 
 # Emprestimos ---------------------------------------------
 

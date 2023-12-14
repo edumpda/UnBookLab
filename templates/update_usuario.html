@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atualizar Usuário</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Adicione estilos conforme necessário */
+    </style>
+</head>
+<body>
+    <h1>Atualizar Usuário</h1>
+
+    <form method="POST" action="{{ url_for('update_usuario', id=user_id) }}">
+        <!-- Campos do formulário -->
+        <label for="nome">Nome:</label>
+        <input type="text" id="nome" name="nome" value="{{ user.Nome }}" required>
+
+        <label for="sobrenome">Sobrenome:</label>
+        <input type="text" id="sobrenome" name="sobrenome" value="{{ user.Sobrenome }}" required>
+
+        <label for="funcao">Função:</label>
+        <input type="text" id="funcao" name="funcao" value="{{ user.Funcao }}" required>
+
+        <label for="login">Login:</label>
+        <input type="text" id="login" name="login" value="{{ user.Login }}" required>
+
+        <label for="senha">Senha:</label>
+        <input type="password" id="senha" name="senha" required>
+
+        <label for="foto">URL da Foto:</label>
+        <input type="text" id="foto" name="foto" value="{{ user.FotoUsuarioURI }}" required>
+
+        <button type="submit">Atualizar Usuário</button>
+    </form>
+
+    <a href="{{ url_for('update_usuario', id=1) }}">Atualizar Usuário</a>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
