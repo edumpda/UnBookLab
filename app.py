@@ -10,7 +10,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://lucas:password@localhost:3306/Biblioteca'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:2570@localhost:3306/Biblioteca'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'chave'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
@@ -67,46 +67,14 @@ class User(UserMixin):
 
 
 engine = create_engine(
-    'mysql://root:#teste123321@localhost:3306/Biblioteca'
+    'mysql://root:2570@localhost:3306/Biblioteca'
 )
 
-#################################### HOME LOGIN #########################################################
-'''
 @app.route('/')
 def home():
     return render_template('home.html')
 
-@app.route('/login')
-def login():
-    return render_template('login.html')
-
-@app.route('/perform_login', methods=['POST'])
-def perform_login():
-    login = request.form.get('login')
-    senha = request.form.get('senha')
-
-    print("Login:", login) 
-    print("Senha:", senha)
-    user = db.session.execute(text("SELECT * FROM usuarios WHERE Login = :login AND SenhaCriptografada = :senha"), {'login': login, 'senha': senha}).fetchone()
-
-    if user:
-        return redirect(url_for('index'))
-
-    else:
-        return render_template('login.html', error="Login ou senha incorretos")
-
-@app.route('/registrar')
-def registrar():
-    return render_template('registrar.html')
-
 @app.route('/index')
-def index():
-    return render_template('index.html')
-'''
-######################################################################################################
-
-
-@app.route('/')
 def index():
     print(current_user.sobrenome, 'tela inicial')
     return render_template('index.html')
@@ -146,7 +114,7 @@ def perform_login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('index'))
+    return redirect(url_for('login'))
 
 
 @app.route('/registrar')
@@ -554,7 +522,7 @@ def add_usuario():
                 'sobrenome': sobrenome,
                 'funcao': funcao,
                 'login': login,
-                'senha': generate_password_hash(senha, method='sha256'),
+                'senha': generate_password_hash(senha, method='pbkdf2:sha256'),
                 'foto': foto
             })
 
