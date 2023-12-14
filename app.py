@@ -8,7 +8,7 @@ import json
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://unbooklab_admin:senha@localhost:3306/Biblioteca'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://lucas:password@localhost:3306/Biblioteca'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'chave'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
@@ -21,7 +21,7 @@ db = SQLAlchemy()
 db.init_app(app)
 
 engine = create_engine(
-    'mysql://unbooklab_admin:senha@localhost:3306/Biblioteca'
+    'mysql://lucas:password@localhost:3306/Biblioteca'
 )
 
 #################################### HOME LOGIN #########################################################
@@ -58,9 +58,12 @@ def index():
     return render_template('index.html')
 '''
 ######################################################################################################
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/add_livro', methods=['GET', 'POST'])
 def add_livro():
@@ -72,7 +75,8 @@ def add_livro():
         autor = request.form['autor']
         descricao = request.form['descricao']
         categoria = request.form['categoria']
-        data_aquisicao = datetime.strptime(request.form['data_aquisicao'], '%Y-%m-%d').date()
+        data_aquisicao = datetime.strptime(
+            request.form['data_aquisicao'], '%Y-%m-%d').date()
         estado_conservacao = request.form['estado_conservacao']
         localizacao_fisica = request.form['localizacao_fisica']
         capa_livro_uri = request.form['capa_livro_uri']
@@ -93,12 +97,15 @@ def add_livro():
                 'capa_livro_uri': capa_livro_uri
             })
             db.session.commit()
-            mensagem = {'conteudo': 'Livro adicionado com sucesso!', 'classe': 'mensagem-sucesso'}
+            mensagem = {'conteudo': 'Livro adicionado com sucesso!',
+                        'classe': 'mensagem-sucesso'}
         except Exception as e:
             db.session.rollback()
-            mensagem = {'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
+            mensagem = {
+                'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
 
     return render_template('cadastrar_livro.html', mensagem=mensagem)
+
 
 @app.route('/update_livro', methods=['GET', 'POST'])
 def update_livro():
@@ -110,7 +117,8 @@ def update_livro():
 
         # Certifique-se de que ISBN não seja None antes de fazer a consulta
         if isbn_pesquisa is not None:
-            livro = db.session.execute(text("SELECT * FROM livros WHERE ISBN = :isbn"), {'isbn': isbn_pesquisa}).fetchone()
+            livro = db.session.execute(text(
+                "SELECT * FROM livros WHERE ISBN = :isbn"), {'isbn': isbn_pesquisa}).fetchone()
 
         if livro:
             return redirect(url_for('update_livro_form', isbn=isbn_pesquisa))
@@ -123,7 +131,8 @@ def update_livro():
 
 @app.route('/update_livro/<isbn>', methods=['GET', 'POST'])
 def update_livro_form(isbn):
-    livro = db.session.execute(text("SELECT * FROM livros WHERE ISBN = :isbn"), {'isbn': isbn}).fetchone()
+    livro = db.session.execute(
+        text("SELECT * FROM livros WHERE ISBN = :isbn"), {'isbn': isbn}).fetchone()
     mensagem = None
 
     if request.method == 'POST':
@@ -153,7 +162,7 @@ def update_livro_form(isbn):
                     'localizacao_fisica': data.get('localizacao_fisica', livro.LocalizacaoFisica),
                     'capa_livro_uri': data.get('capa_livro_uri', livro.CapaLivroURI),
                     'isbn': isbn
-                    })
+                })
                 db.session.commit()
                 mensagem = {'conteudo': 'Livro atualizado com sucesso!',
                             'classe': 'mensagem-sucesso'}
@@ -175,7 +184,8 @@ def delete_livro():
 
     if request.method == 'POST':
         isbn = request.form.get('isbn')
-        livro = db.session.execute(text("SELECT * FROM livros WHERE ISBN = :isbn"), {'isbn': isbn}).fetchone()
+        livro = db.session.execute(
+            text("SELECT * FROM livros WHERE ISBN = :isbn"), {'isbn': isbn}).fetchone()
 
         if livro:
             sql = text("DELETE FROM livros WHERE ISBN = :isbn")
@@ -240,7 +250,7 @@ def get_livros():
 
     livros_json = [{'ISBN': livro.ISBN, 'Titulo': livro.Titulo,
                     'Autor': livro.Autor} for livro in livros]
-    
+
     return jsonify(livros_json)
 
 
@@ -262,7 +272,7 @@ def add_material():
         estado_conservacao = request.form['estado_conservacao']
         localizacao_fisica = request.form['localizacao_fisica']
         foto_material_uri = request.form['foto_material_uri']
- 
+
         sql = text(
             """INSERT INTO materiaisdidaticos (Descricao, Categoria, NumeroSerie, EstadoConservacao, LocalizacaoFisica, FotoMaterialURI) 
             VALUES ('{descricao}', '{categoria}', '{numero_serie}', '{estado_conservacao}', '{localizacao_fisica}', '{foto_material_uri}');""".format(
@@ -273,10 +283,12 @@ def add_material():
         try:
             db.session.execute(sql)
             db.session.commit()
-            mensagem = {'conteudo': 'Material didático adicionado com sucesso!', 'classe': 'mensagem-sucesso'}
+            mensagem = {
+                'conteudo': 'Material didático adicionado com sucesso!', 'classe': 'mensagem-sucesso'}
         except Exception as e:
             db.session.rollback()
-            mensagem = {'conteudo': f'Erro ao adicionar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
+            mensagem = {
+                'conteudo': f'Erro ao adicionar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
 
     return render_template('cadastrar_material.html', mensagem=mensagem)
 
@@ -290,18 +302,22 @@ def update_material():
         id_pesquisa = request.form.get('id_pesquisa')
         # Certifique-se de que ID não seja None antes de fazer a consulta
         if id_pesquisa is not None:
-            material = db.session.execute(text("SELECT * FROM materiaisdidaticos WHERE ID = :id"), {'id': id_pesquisa}).fetchone()
+            material = db.session.execute(text(
+                "SELECT * FROM materiaisdidaticos WHERE ID = :id"), {'id': id_pesquisa}).fetchone()
 
         if material:
             return redirect(url_for('update_material_form', id=id_pesquisa))
         else:
-            mensagem = {'conteudo': 'Material didático não encontrado.', 'classe': 'mensagem-erro'}
+            mensagem = {
+                'conteudo': 'Material didático não encontrado.', 'classe': 'mensagem-erro'}
 
     return render_template('update_material_pesquisa.html', mensagem=mensagem)
 
+
 @app.route('/update_material/<id>', methods=['GET', 'POST'])
 def update_material_form(id):
-    material = db.session.execute(text("SELECT * FROM materiaisdidaticos WHERE ID = :id"), {'id': id}).fetchone()
+    material = db.session.execute(
+        text("SELECT * FROM materiaisdidaticos WHERE ID = :id"), {'id': id}).fetchone()
     mensagem = None
 
     if request.method == 'POST':
@@ -329,15 +345,17 @@ def update_material_form(id):
                     'id': id
                 })
                 db.session.commit()
-                mensagem = {'conteudo': 'Material didático atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
+                mensagem = {
+                    'conteudo': 'Material didático atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
             except Exception as e:
                 db.session.rollback()
-                mensagem = {'conteudo': f'Erro ao atualizar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
+                mensagem = {
+                    'conteudo': f'Erro ao atualizar o material didático: {str(e)}', 'classe': 'mensagem-erro'}
         else:
-            mensagem = {'conteudo': 'Material didático não encontrado para atualização.', 'classe': 'mensagem-erro'}
+            mensagem = {
+                'conteudo': 'Material didático não encontrado para atualização.', 'classe': 'mensagem-erro'}
 
     return render_template('update_material.html', material=material, mensagem=mensagem)
-
 
 
 @app.route('/delete_material', methods=['GET', 'POST'])
@@ -347,7 +365,8 @@ def delete_material():
 
     if request.method == 'POST':
         id = request.form.get('id')
-        material = db.session.execute(text("SELECT * FROM materiaisdidaticos WHERE ID = :id"), {'id': id}).fetchone()
+        material = db.session.execute(
+            text("SELECT * FROM materiaisdidaticos WHERE ID = :id"), {'id': id}).fetchone()
 
         if material:
             sql = text("DELETE FROM materiaisdidaticos WHERE ID = :id")
@@ -412,6 +431,7 @@ def get_materiais():
                        'Categoria': material.Categoria} for material in materiais]
     return jsonify(materiais_json)
 
+
 @app.route('/materiais_crud')
 def materiais_crud():
     return render_template('material_crud.html')
@@ -440,10 +460,10 @@ def add_usuario():
         return f'Erro ao adicionar usuário: {str(e)}'
 
 
-
 @app.route('/update_usuario/<id>', methods=['PUT'])
 def update_usuario(id):
-    user_existente = db.session.execute(text("SELECT * FROM usuarios WHERE ID = :id"), {'id': id}).fetchone()
+    user_existente = db.session.execute(
+        text("SELECT * FROM usuarios WHERE ID = :id"), {'id': id}).fetchone()
 
     if user_existente:
         data = request.json
@@ -477,11 +497,13 @@ def update_usuario(id):
 
 @app.route('/delete_usuario/<id>', methods=['DELETE'])
 def delete_usuario(id):
-    user_existente = db.session.execute(text("SELECT * FROM usuarios WHERE ID = :id"), {'id': id}).fetchone()
+    user_existente = db.session.execute(
+        text("SELECT * FROM usuarios WHERE ID = :id"), {'id': id}).fetchone()
 
     if user_existente:
         try:
-            db.session.execute(text("DELETE FROM usuarios WHERE ID = :id"), {'id': id})
+            db.session.execute(
+                text("DELETE FROM usuarios WHERE ID = :id"), {'id': id})
             db.session.commit()
             return jsonify({'message': 'Usuário excluído com sucesso'}), 200
         except Exception as e:
@@ -491,10 +513,10 @@ def delete_usuario(id):
         return jsonify({'error': 'Usuário não encontrado'}), 404
 
 
-
 @app.route('/get_usuario/<id>')
 def get_usuario(id):
-    user = db.session.execute(text("SELECT * FROM usuarios WHERE ID = :id"), {'id': id}).fetchone()
+    user = db.session.execute(
+        text("SELECT * FROM usuarios WHERE ID = :id"), {'id': id}).fetchone()
 
     if user:
         user_json = {
@@ -524,16 +546,16 @@ def add_emprestimo():
         data_dev = request.form['data_devolucao']
         # status = request.form['status']
         sql_user = text(
-            """SELECT ID FROM usuario WHERE usuario.Nome = '{name}'""".format(name=name))
+            """SELECT ID FROM Usuarios WHERE Usuarios.Nome = '{name}'""".format(name=name))
         sql_book = text(
-            """SELECT ISBN FROM livros WHERE livros.ISBN = '{isbn}'""".format(isbn=isbn))
+            """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
         id_user = engine.execute(sql_user)
         id_book = engine.execute(sql_book)
         user_tuple = id_user.first()
         book_tuple = id_book.first()
         if user_tuple and book_tuple is not None:
             sql = text(
-                """INSERT INTO emprestimo (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista) 
+                """INSERT INTO Emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista) 
             VALUES ({user}, {livro}, {material}, '{data_emp}', '{data_dev}');""".format(
                     user=user_tuple[0], livro=book_tuple[0], material=material, data_emp=data_emp, data_dev=data_dev))
             try:
@@ -560,16 +582,16 @@ def update_emprestimo():
         isbn = request.form.get('isbn')
 
         sql_user = text(
-            """SELECT ID FROM usuario WHERE usuario.Nome = '{name}'""".format(name=name))
+            """SELECT ID FROM Usuarios WHERE Usuarios.Nome = '{name}'""".format(name=name))
         sql_book = text(
-            """SELECT ISBN FROM livros WHERE livros.ISBN = '{isbn}'""".format(isbn=isbn))
+            """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
         id_user = engine.execute(sql_user)
         id_book = engine.execute(sql_book)
         user_tuple = id_user.first()
         book_tuple = id_book.first()
         if user_tuple and book_tuple is not None:
             sql = text(
-                """SELECT * FROM emprestimo AS E WHERE E.IDUsuario = {id_user} AND E.IDLivro = {id_book} """.format(id_user=user_tuple[0], id_book=book_tuple[0]))
+                """SELECT * FROM Emprestimos AS E WHERE E.IDUsuario = {id_user} AND E.IDLivro = {id_book} """.format(id_user=user_tuple[0], id_book=book_tuple[0]))
             emprestimo = engine.execute(sql).first()
             print(emprestimo)
 
@@ -589,7 +611,7 @@ def update_emprestimo():
 def update_emprestimo_form(id):
     mensagem = None
     sql = text(
-        """SELECT * FROM emprestimo AS E WHERE E.ID = {emp_id}""".format(emp_id=id))
+        """SELECT * FROM Emprestimos AS E WHERE E.ID = {emp_id}""".format(emp_id=id))
     emprestimo = engine.execute(sql).first()
     print(emprestimo)
     if request.method == 'POST':
@@ -597,7 +619,7 @@ def update_emprestimo_form(id):
         data_dev = request.form['data_devolucao']
         status = request.form['status']
         sql = text(
-            """UPDATE emprestimo SET DataEmprestimo = '{data_emp}', 
+            """UPDATE Emprestimos SET DataEmprestimo = '{data_emp}', 
             DataDevolucaoPrevista = '{data_dev}', Status = '{status}' WHERE ID = {emp_id};""".format(
                 data_emp=data_emp, data_dev=data_dev, status=status, emp_id=id))
         print(sql)
@@ -617,7 +639,7 @@ def update_emprestimo_form(id):
 def get_emprestimos_estudante(id):
     emprestimos = []
     sql = text(
-        """SELECT * FROM emprestimo AS E WHERE E.IDUsuario = {id_user}""".format(id_user=id))
+        """SELECT * FROM Emprestimos AS E WHERE E.IDUsuario = {id_user}""".format(id_user=id))
     result = engine.execute(sql)
     print(result)
     for row in engine.execute(sql):
@@ -636,16 +658,16 @@ def delete_emprestimo():
         isbn = request.form.get('isbn')
 
         sql_user = text(
-            """SELECT ID FROM usuario WHERE usuario.Nome = '{name}'""".format(name=name))
+            """SELECT ID FROM Usuarios WHERE Usuarios.Nome = '{name}'""".format(name=name))
         sql_book = text(
-            """SELECT ISBN FROM livros WHERE livros.ISBN = '{isbn}'""".format(isbn=isbn))
+            """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
         id_user = engine.execute(sql_user).first()[0]
         id_book = engine.execute(sql_book).first()[0]
 
         if name and isbn is not None:
             try:
                 sql = text(
-                    """DELETE FROM emprestimo WHERE IDUsuario = {id_user} AND IDLivro = {id_book} """.format(id_user=id_user, id_book=id_book))
+                    """DELETE FROM Emprestimos WHERE IDUsuario = {id_user} AND IDLivro = {id_book} """.format(id_user=id_user, id_book=id_book))
                 engine.execute(sql).first()
                 mensagem = {'conteudo': 'Livro excluído com sucesso!',
                             'classe': 'mensagem-sucesso'}
@@ -666,15 +688,15 @@ def get_emprestimo():
         isbn = request.form.get('isbn')
 
         sql_user = text(
-            """SELECT ID FROM usuario WHERE usuario.Nome = '{name}'""".format(name=name))
+            """SELECT ID FROM Usuarios WHERE Usuarios.Nome = '{name}'""".format(name=name))
         sql_book = text(
-            """SELECT ISBN FROM livros WHERE livros.ISBN = '{isbn}'""".format(isbn=isbn))
+            """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
         id_user = engine.execute(sql_user)
         id_book = engine.execute(sql_book)
 
         if id_user and id_book.first is not None:
             sql = text(
-                """SELECT * FROM emprestimo AS E WHERE E.IDUsuario = {id_user} AND E.IDLivro = {id_book} """.format(id_user=id_user.first()[0], id_book=id_book.first()[0]))
+                """SELECT * FROM Emprestimos AS E WHERE E.IDUsuario = {id_user} AND E.IDLivro = {id_book} """.format(id_user=id_user.first()[0], id_book=id_book.first()[0]))
             emprestimo = engine.execute(sql).first()
 
             if emprestimo:
