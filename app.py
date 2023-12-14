@@ -8,7 +8,7 @@ import json
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://lucas:password@localhost:3306/Biblioteca'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://unbooklab_admin:senha@localhost:3306/Biblioteca'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'chave'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
@@ -21,7 +21,7 @@ db = SQLAlchemy()
 db.init_app(app)
 
 engine = create_engine(
-    'mysql://lucas:password@localhost:3306/Biblioteca'
+    'mysql://unbooklab_admin:senha@localhost:3306/Biblioteca'
 )
 
 #################################### HOME LOGIN #########################################################
