@@ -81,7 +81,7 @@ def add_livro():
         localizacao_fisica = request.form['localizacao_fisica']
         capa_livro_uri = request.form['capa_livro_uri']
 
-        sql = text("""INSERT INTO livros (ISBN, Titulo, Autor, Descricao, Categoria, DataAquisicao, EstadoConservacao, LocalizacaoFisica, CapaLivroURI) 
+        sql = text("""INSERT INTO Livros (ISBN, Titulo, Autor, Descricao, Categoria, DataAquisicao, EstadoConservacao, LocalizacaoFisica, CapaLivroURI) 
                       VALUES (:isbn, :titulo, :autor, :descricao, :categoria, :data_aquisicao, :estado_conservacao, :localizacao_fisica, :capa_livro_uri)""")
 
         try:
@@ -549,8 +549,8 @@ def add_emprestimo():
             """SELECT ID FROM Usuarios WHERE Usuarios.Nome = '{name}'""".format(name=name))
         sql_book = text(
             """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
-        id_user = engine.execute(sql_user)
-        id_book = engine.execute(sql_book)
+        id_user = db.session.execute(sql_user)
+        id_book = db.session.execute(sql_book)
         user_tuple = id_user.first()
         book_tuple = id_book.first()
         if user_tuple and book_tuple is not None:
@@ -559,7 +559,7 @@ def add_emprestimo():
             VALUES ({user}, {livro}, {material}, '{data_emp}', '{data_dev}');""".format(
                     user=user_tuple[0], livro=book_tuple[0], material=material, data_emp=data_emp, data_dev=data_dev))
             try:
-                engine.execute(sql)
+                db.session.execute(sql)
                 mensagem = {'conteudo': 'Emprestimo adicionado com sucesso!',
                             'classe': 'mensagem-sucesso'}
             except Exception as e:
@@ -585,14 +585,14 @@ def update_emprestimo():
             """SELECT ID FROM Usuarios WHERE Usuarios.Nome = '{name}'""".format(name=name))
         sql_book = text(
             """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
-        id_user = engine.execute(sql_user)
-        id_book = engine.execute(sql_book)
+        id_user = db.session.execute(sql_user)
+        id_book = db.session.execute(sql_book)
         user_tuple = id_user.first()
         book_tuple = id_book.first()
         if user_tuple and book_tuple is not None:
             sql = text(
                 """SELECT * FROM Emprestimos AS E WHERE E.IDUsuario = {id_user} AND E.IDLivro = {id_book} """.format(id_user=user_tuple[0], id_book=book_tuple[0]))
-            emprestimo = engine.execute(sql).first()
+            emprestimo = db.session.execute(sql).first()
             print(emprestimo)
 
             if emprestimo:
@@ -612,8 +612,7 @@ def update_emprestimo_form(id):
     mensagem = None
     sql = text(
         """SELECT * FROM Emprestimos AS E WHERE E.ID = {emp_id}""".format(emp_id=id))
-    emprestimo = engine.execute(sql).first()
-    print(emprestimo)
+    emprestimo = db.session.execute(sql).first()
     if request.method == 'POST':
         data_emp = request.form['data_emprestimo']
         data_dev = request.form['data_devolucao']
@@ -624,7 +623,7 @@ def update_emprestimo_form(id):
                 data_emp=data_emp, data_dev=data_dev, status=status, emp_id=id))
         print(sql)
         try:
-            engine.execute(sql)
+            db.session.execute(sql)
             mensagem = {'conteudo': 'Emprestimo atualizado com sucesso!',
                         'classe': 'mensagem-sucesso'}
         except Exception as e:
@@ -640,9 +639,9 @@ def get_emprestimos_estudante(id):
     emprestimos = []
     sql = text(
         """SELECT * FROM Emprestimos AS E WHERE E.IDUsuario = {id_user}""".format(id_user=id))
-    result = engine.execute(sql)
+    result = db.session.execute(sql)
     print(result)
-    for row in engine.execute(sql):
+    for row in db.session.execute(sql):
         emprestimos.append(emprestimo_module.initialize(row))
 
     return emprestimos
@@ -661,14 +660,14 @@ def delete_emprestimo():
             """SELECT ID FROM Usuarios WHERE Usuarios.Nome = '{name}'""".format(name=name))
         sql_book = text(
             """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
-        id_user = engine.execute(sql_user).first()[0]
-        id_book = engine.execute(sql_book).first()[0]
+        id_user = db.session.execute(sql_user).first()[0]
+        id_book = db.session.execute(sql_book).first()[0]
 
         if name and isbn is not None:
             try:
                 sql = text(
                     """DELETE FROM Emprestimos WHERE IDUsuario = {id_user} AND IDLivro = {id_book} """.format(id_user=id_user, id_book=id_book))
-                engine.execute(sql).first()
+                db.session.execute(sql)
                 mensagem = {'conteudo': 'Livro excluído com sucesso!',
                             'classe': 'mensagem-sucesso'}
             except Exception as e:

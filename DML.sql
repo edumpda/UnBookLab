@@ -29,8 +29,8 @@ INSERT INTO Usuarios (ID, Nome, Sobrenome, Funcao, Login, SenhaCriptografada, Fo
 VALUES (3, 'João', 'Ferreira', 'Técnico em Informática', 'joao.ferreira', '789456', 'usuario3.jpg');
 
 INSERT INTO Emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista, Status)
-VALUES (1, '9783161484100', 2, '2023-11-14', '2023-11-28', 'Em andamento');
+VALUES (1, '9783161484100', 2, '2024-11-14', '2024-12-28', 'Em andamento');
 INSERT INTO Emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista, Status)
-VALUES (1, '9783161484117', 2, '2023-11-14', '2023-11-28', 'Em andamento');
+VALUES (1, '9783161484117', 2, '2024-11-14', '2024-12-28', 'Em andamento');
 INSERT INTO Emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista, Status)
-VALUES (1, '9783161484124', 2, '2023-11-14', '2023-11-28', 'Em andamento');
+VALUES (1, '9783161484124', 2, '2024-11-14', '2024-12-28', 'Em andamento');
