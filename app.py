@@ -831,7 +831,10 @@ def get_emprestimo():
 
 @app.route('/emprestimos_crud')
 def emprestimos_crud():
-    return render_template('emprestimos_crud.html')
+    if current_user.funcao != 'aluno':
+        return render_template('emprestimos_crud.html')
+    else:
+        return render_template('emprestimos_crud.html', link='/get_emprestimos_estudante/{id_user}'.format(id_user=current_user.id))
 
 
 if __name__ == '__main__':
