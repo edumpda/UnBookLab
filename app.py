@@ -496,6 +496,9 @@ def materiais_crud():
 
 # Usuarios ---------------------------------------------------
 
+@app.route('/usuarios_crud')
+def usuarios_crud():
+    return render_template('usuarios_crud.html')
 
 @app.route('/add_usuario', methods=['POST'])
 def add_usuario():
@@ -529,57 +532,93 @@ def add_usuario():
         return f'Erro ao adicionar usuário: {str(e)}'
 
 
-@app.route('/update_usuario/<id>', methods=['PUT'])
-def update_usuario(id):
-    user_existente = db.session.execute(
-        text("SELECT * FROM usuarios WHERE ID = :id"), {'id': id}).fetchone()
+@app.route('/update_usuario', methods=['GET', 'POST'])
+def update_usuario():
+    mensagem = None
 
-    if user_existente:
-        data = request.json
+    if request.method == 'POST':
+        user_id = request.form.get('user_id')
+
+        sql_user = text("SELECT ID FROM usuarios WHERE usuarios.ID = :user_id")
+        id_user = db.session.execute(sql_user, {'user_id': user_id}).first()
+
+        if id_user is not None:
+            return redirect(url_for('update_usuario_form', id=id_user[0]))
+        else:
+            mensagem = {'conteudo': 'Usuário não encontrado.', 'classe': 'mensagem-erro'}
+
+    return render_template('update_usuario.html', mensagem=mensagem)
+
+
+@app.route('/update_usuario_form/<id>', methods=['GET', 'POST'])
+def update_usuario_form(id):
+    mensagem = None
+
+    sql = text("SELECT * FROM usuarios WHERE ID = :user_id")
+    usuario = db.session.execute(sql, {'user_id': id}).first()
+
+    if usuario is None:
+        mensagem = {'conteudo': 'Usuário não encontrado.', 'classe': 'mensagem-erro'}
+    elif request.method == 'POST':
+        nome = request.form['nome']
+        sobrenome = request.form['sobrenome']
+        funcao = request.form['funcao']
+        login = request.form['login']
+        senha = request.form['senha']
+        foto = request.form['foto']
+
+        update_sql = text("""
+            UPDATE usuarios
+            SET Nome = :nome,
+                Sobrenome = :sobrenome,
+                Funcao = :funcao,
+                Login = :login,
+                SenhaCriptografada = :senha,
+                FotoUsuarioURI = :foto
+            WHERE ID = :user_id
+        """)
+
         try:
-            db.session.execute(text("""
-                UPDATE usuarios
-                SET Nome = :nome,
-                    Sobrenome = :sobrenome,
-                    Funcao = :funcao,
-                    Login = :login,
-                    SenhaCriptografada = :senha,
-                    FotoUsuarioURI = :foto
-                WHERE ID = :id
-            """), {
-                'nome': data.get('Nome', user_existente.Nome),
-                'sobrenome': data.get('Sobrenome', user_existente.Sobrenome),
-                'funcao': data.get('Funcao', user_existente.Funcao),
-                'login': data.get('Login', user_existente.Login),
-                'senha': data.get('SenhaCriptografada', user_existente.SenhaCriptografada),
-                'foto': data.get('FotoUsuarioURI', user_existente.FotoUsuarioURI),
-                'id': id
-            })
+            db.session.execute(update_sql, {'nome': nome, 'sobrenome': sobrenome, 'funcao': funcao,
+                                            'login': login, 'senha': senha, 'foto': foto, 'user_id': id})
             db.session.commit()
-            return jsonify({'message': 'Usuário atualizado com sucesso'}), 200
+            mensagem = {'conteudo': 'Usuário atualizado com sucesso!', 'classe': 'mensagem-sucesso'}
         except Exception as e:
             db.session.rollback()
-            return jsonify({'error': str(e)}), 500
-    else:
-        return jsonify({'error': 'Usuário não encontrado'}), 404
+            mensagem = {'conteudo': f'Erro ao atualizar usuário: {str(e)}', 'classe': 'mensagem-erro'}
+
+    return render_template('update_usuario_pesquisa.html', usuario=usuario, mensagem=mensagem)
 
 
-@app.route('/delete_usuario/<id>', methods=['DELETE'])
-def delete_usuario(id):
-    user_existente = db.session.execute(
-        text("SELECT * FROM usuarios WHERE ID = :id"), {'id': id}).fetchone()
 
-    if user_existente:
-        try:
-            db.session.execute(
-                text("DELETE FROM usuarios WHERE ID = :id"), {'id': id})
-            db.session.commit()
-            return jsonify({'message': 'Usuário excluído com sucesso'}), 200
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'error': str(e)}), 500
-    else:
-        return jsonify({'error': 'Usuário não encontrado'}), 404
+@app.route('/delete_usuario', methods=['POST'])
+@login_required
+def delete_usuario():
+    mensagem = None
+    usuario = None
+    if current_user.funcao != 'aluno':
+        if request.method == 'POST':
+            id_usuario_a_excluir = request.form.get('id')
+            usuario = db.session.execute(
+                text("SELECT * FROM usuarios WHERE ID = :id"), {'id': id_usuario_a_excluir}).fetchone()
+
+            if usuario:
+                sql = text("DELETE FROM usuarios WHERE ID = :id")
+
+                try:
+                    db.session.execute(sql, {'id': id_usuario_a_excluir})
+                    db.session.commit()
+                    mensagem = {
+                        'conteudo': 'Usuário excluído com sucesso!', 'classe': 'mensagem-sucesso'}
+                except Exception as e:
+                    db.session.rollback()
+                    mensagem = {
+                        'conteudo': f'Erro ao excluir o usuário: {str(e)}', 'classe': 'mensagem-erro'}
+            else:
+                mensagem = {
+                    'conteudo': 'Usuário não encontrado para exclusão.', 'classe': 'mensagem-erro'}
+
+    return render_template('delete_usuario.html', usuario=usuario, mensagem=mensagem)
 
 
 @app.route('/get_usuario/<id>')
@@ -604,13 +643,12 @@ def get_usuario(id):
 @app.route('/get_usuarios')
 def get_usuarios():
     sql = text(
-        """SELECT Nome, Funcao FROM Usuarios"""
+        """SELECT Nome, Sobrenome, Funcao FROM Usuarios"""
     )
 
     usuarios = db.session.execute(sql).fetchall()
 
-    usuarios_json = [{'Nome': usuario.Nome, 'Funcao': usuario.Funcao}
-                     for usuario in usuarios]
+    usuarios_json = [{'Nome': usuario.Nome, 'Sobrenome': usuario.Sobrenome, 'Funcao': usuario.Funcao} for usuario in usuarios]
 
     return jsonify(usuarios_json)
 

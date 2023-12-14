@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atualizar Usuário</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            color: #333;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        form {
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: left;
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        a {
+            text-decoration: none;
+            color: #3498db;
+            display: block;
+            margin-top: 10px;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: #2980b9;
+        }
+        .button-voltar {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            background-color: #333;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Atualizar Usuário</h1>
+
+    <form method="POST" action="{{ url_for('update_usuario', id=user_id) }}">
+        <!-- Campos do formulário -->
+        <label for="nome">Nome:</label>
+        <input type="text" id="nome" name="nome" value="{{ user.Nome }}" required>
+
+        <label for="sobrenome">Sobrenome:</label>
+        <input type="text" id="sobrenome" name="sobrenome" value="{{ user.Sobrenome }}" required>
+
+        <label for="funcao">Função:</label>
+        <input type="text" id="funcao" name="funcao" value="{{ user.Funcao }}" required>
+
+        <label for="login">Login:</label>
+        <input type="text" id="login" name="login" value="{{ user.Login }}" required>
+
+        <label for="senha">Senha:</label>
+        <input type="password" id="senha" name="senha" required>
+
+        <label for="foto">URL da Foto:</label>
+        <input type="text" id="foto" name="foto" value="{{ user.FotoUsuarioURI }}" required>
+
+        <button type="submit">Atualizar Usuário</button>
+    </form>
+
+    <a href="{{ url_for('update_usuario', id=1) }}">Atualizar Usuário</a>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <!-- Adicione as metatags, links de estilo, etc., conforme necessário -->
+</head>
+<body>
+    <h1>Atualizar Usuário</h1>
+    <!-- Se houver uma mensagem de sucesso ou erro, exiba-a aqui -->
+    {% if mensagem %}
+        <div class="{{ mensagem.classe }}">{{ mensagem.conteudo }}</div>
+    {% endif %}
+    <!-- Formulário para confirmar a atualização -->
+    <form method="post" action="{{ url_for('update_usuario_form', id=usuario.ID) }}">
+        <!-- Inclua os campos do usuário que podem ser atualizados -->
+        <label for="nome">Nome:</label>
+        <input type="text" id="nome" name="nome" value="{{ usuario.Nome }}" required>
+
+        <label for="sobrenome">Sobrenome:</label>
+        <input type="text" id="sobrenome" name="sobrenome" value="{{ usuario.Sobrenome }}" required>
+
+        <label for="funcao">Função:</label>
+        <input type="text" id="funcao" name="funcao" value="{{ usuario.Funcao }}" required>
+
+        <label for="login">Login:</label>
+        <input type="text" id="login" name="login" value="{{ usuario.Login }}" required>
+
+        <label for="senha">Senha:</label>
+        <input type="password" id="senha" name="senha" placeholder="Deixe em branco para manter a mesma senha">
+
+        <label for="foto_usuario_uri">URL da Foto do Usuário:</label>
+        <input type="text" id="foto_usuario_uri" name="foto_usuario_uri" value="{{ usuario.FotoUsuarioURI }}">
+
+        <!-- Repita o mesmo padrão para outros campos -->
+        <button type="submit">Confirmar Atualização</button>
+    </form>
+    <!-- Link para voltar à página principal -->
+    <a class="button-voltar" href="{{ url_for('usuarios_crud') }}">Voltar para CRUD Usuários</a>
+    <a href="{{ url_for('index') }}">Voltar para a página principal</a>
+</body>
+</html>
