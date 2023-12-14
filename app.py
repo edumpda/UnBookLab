@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from sqlalchemy import text
 from sqlalchemy import create_engine
+import emprestimo_module
 import json
 
 app = Flask(__name__)
@@ -516,69 +517,181 @@ def get_usuario(id):
 def add_emprestimo():
     mensagem = None
     if request.method == 'POST':
-        user = request.form['user']
-        livro = request.form['book']
+        name = request.form['user']
+        isbn = request.form['book']
         material = request.form['material']
         data_emp = request.form['data_emprestimo']
         data_dev = request.form['data_devolucao']
-        status = request.form['status']
-        sql = text(
-            """INSERT INTO emprestimo (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista, Status) 
-            VALUES ({user}, {livro}, {material}, '{data_emp}', '{data_dev}', '{status}');""".format(
-                user=user, livro=livro, material=material, data_emp=data_emp, data_dev=data_dev, status=status))
-        print(sql)
-        try:
-            engine.execute(sql)
-            mensagem = {'conteudo': 'Emprestimo adicionado com sucesso!',
-                        'classe': 'mensagem-sucesso'}
-        except Exception as e:
-            db.session.rollback()
+        # status = request.form['status']
+        sql_user = text(
+            """SELECT ID FROM usuario WHERE usuario.Nome = '{name}'""".format(name=name))
+        sql_book = text(
+            """SELECT ISBN FROM livros WHERE livros.ISBN = '{isbn}'""".format(isbn=isbn))
+        id_user = engine.execute(sql_user)
+        id_book = engine.execute(sql_book)
+        user_tuple = id_user.first()
+        book_tuple = id_book.first()
+        if user_tuple and book_tuple is not None:
+            sql = text(
+                """INSERT INTO emprestimo (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista) 
+            VALUES ({user}, {livro}, {material}, '{data_emp}', '{data_dev}');""".format(
+                    user=user_tuple[0], livro=book_tuple[0], material=material, data_emp=data_emp, data_dev=data_dev))
+            try:
+                engine.execute(sql)
+                mensagem = {'conteudo': 'Emprestimo adicionado com sucesso!',
+                            'classe': 'mensagem-sucesso'}
+            except Exception as e:
+                mensagem = {
+                    'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
+        else:
             mensagem = {
-                'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
+                'conteudo': f'Erro ao adicionar o livro', 'classe': 'mensagem-erro'}
 
     return render_template('cadastrar_emprestimo.html', mensagem=mensagem)
 
 
-@app.route('/update_emprestimo/<id>', methods=['PUT'])
-def update_emprestimo(id):
-    emprestimo = db.session.execute(text("SELECT * FROM emprestimos WHERE ID = :id"), {'id': id}).fetchone()
-    if emprestimo is None:
-        return jsonify({'error': 'Emprestimo não encontrado'}), 404
+@app.route('/update_emprestimo', methods=['GET', 'POST'])
+def update_emprestimo():
+    mensagem = None
+    emprestimo = None
 
-    data = request.json
-    emprestimo.Login = data.get('DataEmprestimo', emprestimo.DataEmprestimo)
-    emprestimo.DataDevolucaoPrevista = data.get(
-        "2017-01-01", emprestimo.DataDevolucaoPrevista)
-    emprestimo.Status = data.get('Status', emprestimo.Status)
+    if request.method == 'POST':
+        name = request.form.get('name')
+        isbn = request.form.get('isbn')
 
-    db.session.commit()
-    return jsonify({'message': 'Emprestimo atualizado com sucesso'}), 200
+        sql_user = text(
+            """SELECT ID FROM usuario WHERE usuario.Nome = '{name}'""".format(name=name))
+        sql_book = text(
+            """SELECT ISBN FROM livros WHERE livros.ISBN = '{isbn}'""".format(isbn=isbn))
+        id_user = engine.execute(sql_user)
+        id_book = engine.execute(sql_book)
+        user_tuple = id_user.first()
+        book_tuple = id_book.first()
+        if user_tuple and book_tuple is not None:
+            sql = text(
+                """SELECT * FROM emprestimo AS E WHERE E.IDUsuario = {id_user} AND E.IDLivro = {id_book} """.format(id_user=user_tuple[0], id_book=book_tuple[0]))
+            emprestimo = engine.execute(sql).first()
+            print(emprestimo)
+
+            if emprestimo:
+                return redirect(url_for('update_emprestimo_form', id=emprestimo[0]))
+            else:
+                mensagem = {'conteudo': 'emprestimo não encontrado.',
+                            'classe': 'mensagem-erro'}
+        else:
+            mensagem = {'conteudo': 'emprestimo não encontrado.',
+                        'classe': 'mensagem-erro'}
+
+    return render_template('update_emprestimo_pesquisa.html', mensagem=mensagem)
 
 
-@app.route('/delete_emprestimo/<id>', methods=['DELETE'])
-def delete_emprestimo(id):
-    emprestimo = db.session.execute(text("SELECT * FROM emprestimos WHERE ID = :id"), {'id': id}).fetchone()
-    if emprestimo is None:
-        return jsonify({'error': 'Emprestimo não encontrado'}), 404
+@app.route('/update_emprestimo_form/<id>', methods=['GET', 'POST'])
+def update_emprestimo_form(id):
+    mensagem = None
+    sql = text(
+        """SELECT * FROM emprestimo AS E WHERE E.ID = {emp_id}""".format(emp_id=id))
+    emprestimo = engine.execute(sql).first()
+    print(emprestimo)
+    if request.method == 'POST':
+        data_emp = request.form['data_emprestimo']
+        data_dev = request.form['data_devolucao']
+        status = request.form['status']
+        sql = text(
+            """UPDATE emprestimo SET DataEmprestimo = '{data_emp}', 
+            DataDevolucaoPrevista = '{data_dev}', Status = '{status}' WHERE ID = {emp_id};""".format(
+                data_emp=data_emp, data_dev=data_dev, status=status, emp_id=id))
+        print(sql)
+        try:
+            engine.execute(sql)
+            mensagem = {'conteudo': 'Emprestimo atualizado com sucesso!',
+                        'classe': 'mensagem-sucesso'}
+        except Exception as e:
+            db.session.rollback()
+            mensagem = {
+                'conteudo': f'Erro ao atualizar emprestimo: {str(e)}', 'classe': 'mensagem-erro'}
 
-    db.session.delete(emprestimo)
-    db.session.commit()
-    return jsonify({'message': 'Emprestimo excluído com sucesso'}), 200
+    return render_template('update_emprestimo_form.html', emprestimo=emprestimo, mensagem=mensagem)
 
 
-@app.route('/get_emprestimo/<id>')
-def get_emprestimo(id):
-    emprestimo = db.session.execute(text("SELECT * FROM emprestimos WHERE ID = :id"), {'id': id}).fetchone()
-    if emprestimo is None:
-        return jsonify({'error': 'Material não encontrado'}), 404
+@app.route('/get_emprestimos_estudante/<id>')
+def get_emprestimos_estudante(id):
+    emprestimos = []
+    sql = text(
+        """SELECT * FROM emprestimo AS E WHERE E.IDUsuario = {id_user}""".format(id_user=id))
+    result = engine.execute(sql)
+    print(result)
+    for row in engine.execute(sql):
+        emprestimos.append(emprestimo_module.initialize(row))
 
-    emprestimo_json = {
-        'DataEmprestimo': emprestimo.DataEmprestimo,
-        'DataDevolucaoPrevista': emprestimo.DataDevolucaoPrevista,
-        'Status': emprestimo.Status,
-    }
+    return emprestimos
 
-    return jsonify(emprestimo_json)
+
+@app.route('/delete_emprestimo', methods=['GET', 'POST'])
+def delete_emprestimo():
+    mensagem = None
+    emprestimo = None
+
+    if request.method == 'POST':
+        name = request.form.get('name')
+        isbn = request.form.get('isbn')
+
+        sql_user = text(
+            """SELECT ID FROM usuario WHERE usuario.Nome = '{name}'""".format(name=name))
+        sql_book = text(
+            """SELECT ISBN FROM livros WHERE livros.ISBN = '{isbn}'""".format(isbn=isbn))
+        id_user = engine.execute(sql_user).first()[0]
+        id_book = engine.execute(sql_book).first()[0]
+
+        if name and isbn is not None:
+            try:
+                sql = text(
+                    """DELETE FROM emprestimo WHERE IDUsuario = {id_user} AND IDLivro = {id_book} """.format(id_user=id_user, id_book=id_book))
+                engine.execute(sql).first()
+                mensagem = {'conteudo': 'Livro excluído com sucesso!',
+                            'classe': 'mensagem-sucesso'}
+            except Exception as e:
+                db.session.rollback()
+                mensagem = {
+                    'conteudo': f'Erro ao excluir o livro: {str(e)}', 'classe': 'mensagem-erro'}
+    return render_template('delete_emprestimo.html', mensagem=mensagem)
+
+
+@app.route('/get_emprestimo', methods=['GET', 'POST'])
+def get_emprestimo():
+    mensagem = None
+    emprestimo = None
+
+    if request.method == 'POST':
+        name = request.form.get('name')
+        isbn = request.form.get('isbn')
+
+        sql_user = text(
+            """SELECT ID FROM usuario WHERE usuario.Nome = '{name}'""".format(name=name))
+        sql_book = text(
+            """SELECT ISBN FROM livros WHERE livros.ISBN = '{isbn}'""".format(isbn=isbn))
+        id_user = engine.execute(sql_user)
+        id_book = engine.execute(sql_book)
+
+        if id_user and id_book.first is not None:
+            sql = text(
+                """SELECT * FROM emprestimo AS E WHERE E.IDUsuario = {id_user} AND E.IDLivro = {id_book} """.format(id_user=id_user.first()[0], id_book=id_book.first()[0]))
+            emprestimo = engine.execute(sql).first()
+
+            if emprestimo:
+                return emprestimo_module.initialize(emprestimo)
+            else:
+                mensagem = {'conteudo': 'emprestimo não encontrado.',
+                            'classe': 'mensagem-erro'}
+        else:
+            mensagem = {'conteudo': 'emprestimo não encontrado.',
+                        'classe': 'mensagem-erro'}
+
+    return render_template('get_emprestimo.html', mensagem=mensagem)
+
+
+@app.route('/emprestimos_crud')
+def emprestimos_crud():
+    return render_template('emprestimos_crud.html')
 
 
 if __name__ == '__main__':
