@@ -59,7 +59,7 @@
     </style>
 </head>
 <body>
-    <a class="login-button" href="{{ url_for('login') }}">Login</a>
+    <a class="login-button" href="{{ url_for('logout') }}">Logout</a>
     <h1>Biblioteca</h1>
     {% if current_user.funcao != 'aluno': %}
     <a href="{{ url_for('livros_crud') }}">Gerenciar Livros</a>
