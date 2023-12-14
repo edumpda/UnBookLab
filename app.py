@@ -9,7 +9,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:#teste123321@localhost:3306/Biblioteca'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:lucasql@localhost:3306/Biblioteca'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'chave'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
@@ -505,23 +505,33 @@ def materiais_crud():
 
 # Usuarios ---------------------------------------------------
 
-
 @app.route('/add_usuario', methods=['POST'])
 def add_usuario():
     try:
-        db.session.execute(text("""
-            INSERT INTO usuarios (Nome, Sobrenome, Funcao, Login, SenhaCriptografada, FotoUsuarioURI)
-            VALUES (:nome, :sobrenome, :funcao, :login, :senha, :foto)
-        """), {
-            'nome': 'name',
-            'sobrenome': 'last name',
-            'funcao': 'function',
-            'login': 'login',
-            'senha': 'password',
-            'foto': 'photo'
-        })
-        db.session.commit()
-        return 'Usuário adicionado com sucesso!'
+        if request.method == 'POST':
+            nome = request.form['nome']
+            sobrenome = request.form['sobrenome']
+            login = request.form['login']
+            senha = request.form['senha']
+            tipo = request.form['tipo']
+            foto = request.form['foto']
+
+            funcao = tipo
+
+            db.session.execute(text("""
+                INSERT INTO usuarios (Nome, Sobrenome, Funcao, Login, SenhaCriptografada, FotoUsuarioURI)
+                VALUES (:nome, :sobrenome, :funcao, :login, :senha, :foto)
+            """), {
+                'nome': nome,
+                'sobrenome': sobrenome,
+                'funcao': funcao,
+                'login': login,
+                'senha': senha,
+                'foto': foto
+            })
+
+            db.session.commit()
+            return 'Usuário adicionado com sucesso!'
     except Exception as e:
         db.session.rollback()
         return f'Erro ao adicionar usuário: {str(e)}'
