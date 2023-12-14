@@ -50,11 +50,16 @@
     <h1>CRUD de Emprestimos</h1>
 
     <ul>
+        {% if current_user.funcao != 'aluno': %}
         <li><a href="{{ url_for('add_emprestimo') }}">Cadastrar Emprestimo</a></li>
         <li><a href="{{ url_for('get_emprestimo') }}">Consultar Emprestimo</a></li>
         <li><a href="{{ url_for('update_emprestimo') }}">Atualizar Emprestimo</a></li>
         <li><a href="{{ url_for('delete_emprestimo') }}">Excluir Emprestimo</a></li>
         <li><a href="{{ url_for('index') }}">Voltar à Página Inicial</a></li>
+        {% else %}
+        <li><a href="{{ url_for('add_emprestimo') }}">Cadastrar Emprestimo</a></li>
+        <li><a href="{{ url_for('get_emprestimos_estudante', id= current_user.ID) }}">Consultar Emprestimo</a></li>
+        {% endif %}
     </ul>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>

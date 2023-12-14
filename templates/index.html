@@ -67,6 +67,9 @@
     <a href="{{ url_for('emprestimos_crud') }}">Gerenciar Emprestimos</a>
     <a href="{{ url_for('get_usuarios') }}">Users</a>
     <p>Seja bem-vindo à biblioteca virtual!</p>
+    {% else %}
+    <a href="{{ url_for('emprestimos_crud') }}">Gerenciar Emprestimos</a>
+    {% endif %}
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>
