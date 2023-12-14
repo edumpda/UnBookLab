@@ -21,8 +21,9 @@ db = SQLAlchemy()
 
 db.init_app(app)
 
-login_manager = LoginManager(app)
+login_manager = LoginManager()
 login_manager.login_view = 'login'
+login_manager.init_app(app)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -95,6 +96,7 @@ def index():
 
 @app.route('/')
 def index():
+    print(current_user.sobrenome, 'tela inicial')
     return render_template('index.html')
 
 @app.route('/login')
@@ -117,6 +119,7 @@ def perform_login():
             foto_usuario_uri=user_data.FotoUsuarioURI
         )
         login_user(user)
+        print(current_user.sobrenome, 'tela login')
         return redirect(url_for('index'))
     else:
         return render_template('login.html', error="Login ou senha incorretos")
@@ -132,9 +135,13 @@ def registrar():
     return render_template('registrar.html')
 
 @app.route('/add_livro', methods=['GET', 'POST'])
+@login_required
 def add_livro():
     mensagem = None
     if current_user.funcao != 'Aluno':
+        print(current_user.funcao)
+        print(current_user.foto_usuario_uri)
+        print(current_user.sobrenome)
         print(current_user)
         if request.method == 'POST':
             isbn = request.form['isbn']
@@ -746,7 +753,7 @@ def delete_emprestimo():
             try:
                 sql = text(
                     """DELETE FROM Emprestimos WHERE IDUsuario = {id_user} AND IDLivro = {id_book} """.format(id_user=id_user, id_book=id_book))
-                db.session.execute(sql).first()
+                db.session.execute(sql)
                 mensagem = {'conteudo': 'Livro excluído com sucesso!',
                             'classe': 'mensagem-sucesso'}
             except Exception as e:
