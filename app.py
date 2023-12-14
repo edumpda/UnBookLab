@@ -5,11 +5,12 @@ from sqlalchemy import text
 from sqlalchemy import create_engine
 import emprestimo_module
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:lucasql@localhost:3306/Biblioteca'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://lucas:password@localhost:3306/Biblioteca'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'chave'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
@@ -24,12 +25,15 @@ db.init_app(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
+
 @login_manager.user_loader
 def load_user(user_id):
-    user_data = db.session.execute(text("SELECT * FROM usuarios WHERE ID = :user_id"), {'user_id': user_id}).fetchone()
+    user_data = db.session.execute(text(
+        "SELECT * FROM usuarios WHERE ID = :user_id"), {'user_id': user_id}).fetchone()
     if user_data:
         return User(user_data.ID)
     return None
+
 
 class User(UserMixin):
     def __init__(self, user_id, login=None, sobrenome=None, funcao=None, foto_usuario_uri=None):
@@ -41,7 +45,8 @@ class User(UserMixin):
 
     @staticmethod
     def get(user_id):
-        user_data = db.session.execute(text("SELECT * FROM Usuarios WHERE ID = :user_id"), {'user_id': user_id}).fetchone()
+        user_data = db.session.execute(text(
+            "SELECT * FROM Usuarios WHERE ID = :user_id"), {'user_id': user_id}).fetchone()
         if user_data:
             return User(
                 user_data.ID,
@@ -52,6 +57,7 @@ class User(UserMixin):
                 user_data.FotoUsuarioURI
             )
         return None
+
 
 engine = create_engine(
     'mysql://root:#teste123321@localhost:3306/Biblioteca'
@@ -97,16 +103,19 @@ def index():
 def index():
     return render_template('index.html')
 
+
 @app.route('/login')
 def login():
     return render_template('login.html')
+
 
 @app.route('/perform_login', methods=['POST'])
 def perform_login():
     login = request.form.get('login')
     senha = request.form.get('senha')
 
-    user_data = db.session.execute(text("SELECT * FROM usuarios WHERE Login = :login AND SenhaCriptografada = :senha"), {'login': login, 'senha': senha}).fetchone()
+    user_data = db.session.execute(text(
+        "SELECT * FROM usuarios WHERE Login = :login AND SenhaCriptografada = :senha"), {'login': login, 'senha': senha}).fetchone()
 
     if user_data:
         user = User(
@@ -120,16 +129,19 @@ def perform_login():
         return redirect(url_for('index'))
     else:
         return render_template('login.html', error="Login ou senha incorretos")
-    
+
+
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('index'))
 
+
 @app.route('/registrar')
 def registrar():
     return render_template('registrar.html')
+
 
 @app.route('/add_livro', methods=['GET', 'POST'])
 def add_livro():
@@ -340,7 +352,6 @@ def add_material():
         localizacao_fisica = request.form['localizacao_fisica']
         foto_material_uri = request.form['foto_material_uri']
 
-
         sql = text(
             """INSERT INTO materiaisdidaticos (Descricao, Categoria, NumeroSerie, EstadoConservacao, LocalizacaoFisica, FotoMaterialURI) 
             VALUES ('{descricao}', '{categoria}', '{numero_serie}', '{estado_conservacao}', '{localizacao_fisica}', '{foto_material_uri}');""".format(
@@ -506,6 +517,7 @@ def materiais_crud():
 
 # Usuarios ---------------------------------------------------
 
+
 @app.route('/add_usuario', methods=['POST'])
 def add_usuario():
     try:
@@ -520,14 +532,14 @@ def add_usuario():
             funcao = tipo
 
             db.session.execute(text("""
-                INSERT INTO usuarios (Nome, Sobrenome, Funcao, Login, SenhaCriptografada, FotoUsuarioURI)
+                INSERT INTO Usuarios (Nome, Sobrenome, Funcao, Login, SenhaCriptografada, FotoUsuarioURI)
                 VALUES (:nome, :sobrenome, :funcao, :login, :senha, :foto)
             """), {
                 'nome': nome,
                 'sobrenome': sobrenome,
                 'funcao': funcao,
                 'login': login,
-                'senha': senha,
+                'senha': generate_password_hash(senha, method='sha256'),
                 'foto': foto
             })
 
@@ -608,7 +620,8 @@ def get_usuario(id):
         return jsonify(user_json)
     else:
         return jsonify({'error': 'Usuário não encontrado'}), 404
-    
+
+
 @app.route('/get_usuarios')
 def get_usuarios():
     sql = text(
@@ -617,7 +630,8 @@ def get_usuarios():
 
     usuarios = db.session.execute(sql).fetchall()
 
-    usuarios_json = [{'Nome': usuario.Nome, 'Funcao': usuario.Funcao} for usuario in usuarios]
+    usuarios_json = [{'Nome': usuario.Nome, 'Funcao': usuario.Funcao}
+                     for usuario in usuarios]
 
     return jsonify(usuarios_json)
 
@@ -652,15 +666,17 @@ def add_emprestimo():
             try:
                 db.session.execute(sql)
                 db.session.commit()
-                mensagem = {'conteudo': 'Empréstimo adicionado com sucesso!', 'classe': 'mensagem-sucesso'}
+                mensagem = {
+                    'conteudo': 'Empréstimo adicionado com sucesso!', 'classe': 'mensagem-sucesso'}
             except IntegrityError as e:
                 db.session.rollback()
-                mensagem = {'conteudo': f'Erro ao adicionar o empréstimo: {str(e)}', 'classe': 'mensagem-erro'}
+                mensagem = {
+                    'conteudo': f'Erro ao adicionar o empréstimo: {str(e)}', 'classe': 'mensagem-erro'}
         else:
-            mensagem = {'conteudo': 'Usuário ou livro não encontrado', 'classe': 'mensagem-erro'}
+            mensagem = {'conteudo': 'Usuário ou livro não encontrado',
+                        'classe': 'mensagem-erro'}
 
     return render_template('cadastrar_emprestimo.html', mensagem=mensagem)
-
 
 
 @app.route('/update_emprestimo', methods=['GET', 'POST'])
@@ -687,12 +703,13 @@ def update_emprestimo():
             if emprestimo:
                 return redirect(url_for('update_emprestimo_form', id=emprestimo[0]))
             else:
-                mensagem = {'conteudo': 'Empréstimo não encontrado.', 'classe': 'mensagem-erro'}
+                mensagem = {'conteudo': 'Empréstimo não encontrado.',
+                            'classe': 'mensagem-erro'}
         else:
-            mensagem = {'conteudo': 'Usuário ou livro não encontrado.', 'classe': 'mensagem-erro'}
+            mensagem = {'conteudo': 'Usuário ou livro não encontrado.',
+                        'classe': 'mensagem-erro'}
 
     return render_template('update_emprestimo_pesquisa.html', mensagem=mensagem)
-
 
 
 @app.route('/update_emprestimo_form/<id>', methods=['GET', 'POST'])
