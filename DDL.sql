@@ -80,17 +80,29 @@ DELIMITER ;
 
 
 DELIMITER //
+
 CREATE TRIGGER emprestimo_singularidade
 BEFORE INSERT ON Emprestimos
 FOR EACH ROW
 BEGIN
-    IF EXISTS (SELECT 1 FROM Emprestimos WHERE IDUsuario = NEW.IDUsuario AND IDLivro = NEW.IDLivro AND DataDevolucaoPrevista >= CURDATE()) THEN
+    DECLARE emprestimo_exists INT;
+
+    -- Utilizando DATE() para obter apenas a parte da data
+    SELECT COUNT(*) INTO emprestimo_exists
+    FROM Emprestimos
+    WHERE IDUsuario = NEW.IDUsuario
+      AND IDLivro = NEW.IDLivro
+      AND DATE(DataDevolucaoPrevista) >= DATE(NOW());
+
+    IF emprestimo_exists > 0 THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Este emprestimo ja existe, espere acabar o prazo para cria-lo denovo';
+        SET MESSAGE_TEXT = 'Este empréstimo já existe, espere acabar o prazo para criá-lo novamente';
     END IF;
-    IF EXISTS (SELECT 1 FROM Emprestimos WHERE IDUsuario = NEW.IDUsuario AND IDLivro = NEW.IDLivro AND DataDevolucaoPrevista < CURDATE()) THEN
+
+    IF EXISTS (SELECT 1 FROM Emprestimos WHERE IDUsuario = NEW.IDUsuario AND IDLivro = NEW.IDLivro AND DATE(DataDevolucaoPrevista) < DATE(NOW())) THEN
         DELETE FROM Emprestimos WHERE IDUsuario = NEW.IDUsuario AND IDLivro = NEW.IDLivro;
     END IF;
 END;
+
 //
 DELIMITER ;
