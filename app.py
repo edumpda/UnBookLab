@@ -340,6 +340,7 @@ def add_material():
         localizacao_fisica = request.form['localizacao_fisica']
         foto_material_uri = request.form['foto_material_uri']
 
+
         sql = text(
             """INSERT INTO materiaisdidaticos (Descricao, Categoria, NumeroSerie, EstadoConservacao, LocalizacaoFisica, FotoMaterialURI) 
             VALUES ('{descricao}', '{categoria}', '{numero_serie}', '{estado_conservacao}', '{localizacao_fisica}', '{foto_material_uri}');""".format(
@@ -623,42 +624,43 @@ def get_usuarios():
 
 # Emprestimos ---------------------------------------------
 
-
 @app.route('/add_emprestimo', methods=['GET', 'POST'])
 def add_emprestimo():
     mensagem = None
+
     if request.method == 'POST':
         name = request.form['user']
         isbn = request.form['book']
         material = request.form['material']
         data_emp = request.form['data_emprestimo']
         data_dev = request.form['data_devolucao']
-        # status = request.form['status']
+
+        # Consulta os objetos do banco de dados
         sql_user = text(
             """SELECT ID FROM Usuarios WHERE Usuarios.Nome = '{name}'""".format(name=name))
         sql_book = text(
             """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
-        id_user = db.session.execute(sql_user)
-        id_book = db.session.execute(sql_book)
-        user_tuple = id_user.first()
-        book_tuple = id_book.first()
-        if user_tuple and book_tuple is not None:
+        id_user = db.session.execute(sql_user).first()
+        id_book = db.session.execute(sql_book).first()
+
+        if id_user and id_book:
+            # Tenta adicionar o empréstimo
             sql = text(
-                """INSERT INTO Emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista) 
-            VALUES ({user}, {livro}, {material}, '{data_emp}', '{data_dev}');""".format(
-                    user=user_tuple[0], livro=book_tuple[0], material=material, data_emp=data_emp, data_dev=data_dev))
+                """INSERT INTO Emprestimos (IDUsuario, IDLivro, IDMaterialDidatico, DataEmprestimo, DataDevolucaoPrevista, Status) 
+                VALUES ({user}, '{livro}', {material}, '{data_emp}', '{data_dev}', 'Ativo');""".format(
+                    user=id_user[0], livro=isbn, material=material, data_emp=data_emp, data_dev=data_dev))
             try:
                 db.session.execute(sql)
-                mensagem = {'conteudo': 'Emprestimo adicionado com sucesso!',
-                            'classe': 'mensagem-sucesso'}
-            except Exception as e:
-                mensagem = {
-                    'conteudo': f'Erro ao adicionar o livro: {str(e)}', 'classe': 'mensagem-erro'}
+                db.session.commit()
+                mensagem = {'conteudo': 'Empréstimo adicionado com sucesso!', 'classe': 'mensagem-sucesso'}
+            except IntegrityError as e:
+                db.session.rollback()
+                mensagem = {'conteudo': f'Erro ao adicionar o empréstimo: {str(e)}', 'classe': 'mensagem-erro'}
         else:
-            mensagem = {
-                'conteudo': f'Erro ao adicionar o livro', 'classe': 'mensagem-erro'}
+            mensagem = {'conteudo': 'Usuário ou livro não encontrado', 'classe': 'mensagem-erro'}
 
     return render_template('cadastrar_emprestimo.html', mensagem=mensagem)
+
 
 
 @app.route('/update_emprestimo', methods=['GET', 'POST'])
@@ -674,26 +676,23 @@ def update_emprestimo():
             """SELECT ID FROM Usuarios WHERE Usuarios.Nome = '{name}'""".format(name=name))
         sql_book = text(
             """SELECT ISBN FROM Livros WHERE Livros.ISBN = '{isbn}'""".format(isbn=isbn))
-        id_user = db.session.execute(sql_user)
-        id_book = db.session.execute(sql_book)
-        user_tuple = id_user.first()
-        book_tuple = id_book.first()
-        if user_tuple and book_tuple is not None:
+        id_user = db.session.execute(sql_user).first()
+        id_book = db.session.execute(sql_book).first()
+
+        if id_user and id_book:
             sql = text(
-                """SELECT * FROM Emprestimos AS E WHERE E.IDUsuario = {id_user} AND E.IDLivro = {id_book} """.format(id_user=user_tuple[0], id_book=book_tuple[0]))
+                """SELECT * FROM Emprestimos AS E WHERE E.IDUsuario = {id_user} AND E.IDLivro = '{id_book}' """.format(id_user=id_user[0], id_book=id_book[0]))
             emprestimo = db.session.execute(sql).first()
-            print(emprestimo)
 
             if emprestimo:
                 return redirect(url_for('update_emprestimo_form', id=emprestimo[0]))
             else:
-                mensagem = {'conteudo': 'emprestimo não encontrado.',
-                            'classe': 'mensagem-erro'}
+                mensagem = {'conteudo': 'Empréstimo não encontrado.', 'classe': 'mensagem-erro'}
         else:
-            mensagem = {'conteudo': 'emprestimo não encontrado.',
-                        'classe': 'mensagem-erro'}
+            mensagem = {'conteudo': 'Usuário ou livro não encontrado.', 'classe': 'mensagem-erro'}
 
     return render_template('update_emprestimo_pesquisa.html', mensagem=mensagem)
+
 
 
 @app.route('/update_emprestimo_form/<id>', methods=['GET', 'POST'])
@@ -757,8 +756,9 @@ def delete_emprestimo():
             try:
                 sql = text(
                     """DELETE FROM Emprestimos WHERE IDUsuario = {id_user} AND IDLivro = {id_book} """.format(id_user=id_user, id_book=id_book))
-                db.session.execute(sql).first()
-                mensagem = {'conteudo': 'Livro excluído com sucesso!',
+                db.session.execute(sql)
+                db.session.commit()  # Adicione esta linha para efetivar a exclusão
+                mensagem = {'conteudo': 'Emprestimo excluído com sucesso!',
                             'classe': 'mensagem-sucesso'}
             except Exception as e:
                 db.session.rollback()

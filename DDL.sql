@@ -34,7 +34,6 @@ CREATE TABLE IF NOT EXISTS Usuarios (
     SenhaCriptografada varchar(255),
     FotoUsuarioURI varchar(255)
 );
-
 CREATE TABLE IF NOT EXISTS Emprestimos (
     ID int PRIMARY KEY AUTO_INCREMENT,
     IDUsuario int,
@@ -47,6 +46,9 @@ CREATE TABLE IF NOT EXISTS Emprestimos (
     FOREIGN KEY (IDLivro) REFERENCES Livros(ISBN),
     FOREIGN KEY (IDMaterialDidatico) REFERENCES MateriaisDidaticos(ID)
 );
+
+
+
 
 DROP TRIGGER IF EXISTS datas_validas;
 DROP TRIGGER IF EXISTS emprestimo_singularidade;
@@ -64,33 +66,40 @@ FOR EACH ROW
 BEGIN   
     IF NEW.DataEmprestimo < CURDATE() THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Data de inicio de emprestimo não pode ser no passado';
+        SET MESSAGE_TEXT = 'Aviso: Data de início de empréstimo no passado';
     END IF;
     IF NEW.DataDevolucaoPrevista <= CURDATE() THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Data de fim de emprestimo não pode ser no passado ou hoje';
+        SET MESSAGE_TEXT = 'Aviso: Data de devolução prevista no passado ou hoje';
     END IF;
     IF NEW.DataDevolucaoPrevista <= NEW.DataEmprestimo THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Data de fim não poder ser antes da de inicio';
+        SET MESSAGE_TEXT = 'Aviso: Data de devolução prevista anterior à data de início';
     END IF;
 END;
 //
 DELIMITER ;
 
 
+
 DELIMITER //
+
 CREATE TRIGGER emprestimo_singularidade
 BEFORE INSERT ON Emprestimos
 FOR EACH ROW
 BEGIN
-    IF EXISTS (SELECT 1 FROM Emprestimos WHERE IDUsuario = NEW.IDUsuario AND IDLivro = NEW.IDLivro AND DataDevolucaoPrevista >= CURDATE()) THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Este emprestimo ja existe, espere acabar o prazo para cria-lo denovo';
-    END IF;
-    IF EXISTS (SELECT 1 FROM Emprestimos WHERE IDUsuario = NEW.IDUsuario AND IDLivro = NEW.IDLivro AND DataDevolucaoPrevista < CURDATE()) THEN
-        DELETE FROM Emprestimos WHERE IDUsuario = NEW.IDUsuario AND IDLivro = NEW.IDLivro;
+    DECLARE emprestimo_exists INT;
+
+    -- Verifica se o empréstimo já existe e possui data de devolução prevista no passado
+    SELECT COUNT(*) INTO emprestimo_exists
+    FROM Emprestimos
+    WHERE IDUsuario = NEW.IDUsuario AND IDLivro = NEW.IDLivro AND DataDevolucaoPrevista < CURDATE();
+
+    IF emprestimo_exists > 0 THEN
+        DELETE FROM Emprestimos
+        WHERE IDUsuario = NEW.IDUsuario AND IDLivro = NEW.IDLivro;
     END IF;
 END;
 //
 DELIMITER ;
+
